@@ -8,7 +8,7 @@ int main(int argc, char** argv)
     MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &npes);
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-    std::cout << "Hello World!" << std::endl;
+    std::cout << "Hello World! I'm processor " << myrank << " of " << npes << std::endl;
 
     MPI_Finalize();
     return 0;
