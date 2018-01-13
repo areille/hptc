@@ -30,8 +30,8 @@ int main(int argc, char *argv[])
 
     // Initialization
     double D = 0.1;
-    double dx = 0.2;
-    double dt = 0.2;
+    double dx = 0.05;
+    double dt = 0.01;
     double L = 1.0;
     double T = 1.0;
     double r = D * dt / pow(dx, 2);
@@ -39,7 +39,15 @@ int main(int argc, char *argv[])
     int Tint = 100;
     int ntime = T / dt;
     int nspace = L / dx + 1;
-    printf("nspace : %d, ntime : %d\n", nspace, ntime);
+    int root;
+    if (myrank == 0)
+    {
+        root = 1;
+    } else root = 0;
+    if (root)
+    {
+        printf("nspace : %d, ntime : %d\n", nspace, ntime);
+    }
 
     double results[ntime][nspace];
 
@@ -62,18 +70,24 @@ int main(int argc, char *argv[])
     }
     results[1][0] = Text;
     results[1][nspace - 1] = Text;
-    if (npes == 1)
+    if (npes == 1 || nspace < 4)
     {
         // Fill the matrix according to equation
-        for (int n = 1; n < ntime; n++)
+        if (npes > 1 && nspace < 4)
         {
-            for (int i = 1; i < nspace - 1; i++)
+            if (root)
             {
-                results[n][i] = results[n - 1][i] + r * (results[n - 1][i + 1] - 2 * results[n - 1][i] + results[n - 1][i - 1]);
+                for (int n = 1; n < ntime; n++)
+                {
+                    for (int i = 1; i < nspace - 1; i++)
+                    {
+                        results[n][i] = results[n - 1][i] + r * (results[n - 1][i + 1] - 2 * results[n - 1][i] + results[n - 1][i - 1]);
+                    }
+                }
             }
         }
     }
-    if (npes == 2)
+    if (npes == 2 && nspace > 3)
     {
         int newnspace = nspace / 2;
         printf("new nspace : %d\n", newnspace);
@@ -89,7 +103,7 @@ int main(int argc, char *argv[])
         {
             for (int j = 0; j < newnspace; j++)
             {
-                if (myrank == 0)
+                if (root)
                     p_results[i][j] = results[i][j];
                 else if (myrank == 1)
                     p_results[i][j] = results[i][j + newnspace];
@@ -107,7 +121,7 @@ int main(int argc, char *argv[])
                 // cout << "Results[n-1][i-1] : " << results1[n - 1][i - 1] << endl;
                 // cout << "Results[n-1][i+1] : " << results1[n - 1][i + 1] << endl;
             }
-            if (myrank == 0)
+            if (root)
             {
                 boundary_value_p1 = p_results[n - 1][newnspace - 1];
                 MPI_Send(&boundary_value_p1, 1, MPI_DOUBLE, 1, 0, MPI_COMM_WORLD);
@@ -129,7 +143,15 @@ int main(int argc, char *argv[])
             MPI_Gather(p_results[i], newnspace, MPI_DOUBLE, results[i], newnspace, MPI_DOUBLE, 0, MPI_COMM_WORLD);
         }
     }
-    if (myrank == 0)
+    
+    if (nspace%npes == 0)
+    {
+        printf("All used processors\n");
+    } else if (nspace%(npes-1)==0){
+        printf("1 processor available\n");
+    }
+
+    if (root)
     {
         for (int i = 0; i < ntime; i++)
         {

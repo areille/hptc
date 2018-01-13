@@ -1,5 +1,8 @@
 {
     "files.associations": {
-        "ostream": "cpp"
+        "ostream": "cpp",
+        "bitset": "c",
+        "__locale": "c",
+        "ios": "c"
     }
 }
