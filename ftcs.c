@@ -1,24 +1,23 @@
-#include <iostream>
 #include <mpi.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
-#include <vector>
 
-using namespace std;
-
-void print_matrix(vector<vector<double> > matrix, int width, int height)
+void print_matrix(double **matrix, int width, int height)
 {
-    cout << "iterations over space : " << width << endl;
-    cout << "iterations over time : " << height << endl;
+    printf("Iterations over space : %d \n", width);
+    printf("Iterations over time : %d \n", height);
     for (int i = 0; i < height; i++)
     {
         for (int j = 0; j < width; j++)
         {
-            cout << matrix[i][j] << " ";
+            printf("%f", matrix[i][j]);
         }
-        cout << endl;
+        printf("\n");
     }
 }
-int main(int argc, char **argv)
+
+int main(int argc, char *argv[])
 {
     // MPI things
     int npes, myrank;
@@ -26,8 +25,8 @@ int main(int argc, char **argv)
     MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &npes);
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-    MPI_Comm comm;
-    MPI_Datatype stype;
+
+    // printf("From process %d out of %d, Hello world!\n", myrank, npes);
 
     // Initialization
     double D = 0.1;
@@ -40,10 +39,18 @@ int main(int argc, char **argv)
     int Tint = 100;
     int ntime = T / dt;
     int nspace = L / dx + 1;
-    cout << nspace << " " << ntime;
+    printf("nspace : %d, ntime : %d\n", nspace, ntime);
 
-    vector<vector<double> > results(ntime, vector<double>(nspace));
+    double results[ntime][nspace];
+
     // Initialize grid
+    for (int n = 0; n < ntime; n++)
+    {
+        for (int i = 0; i < nspace; i++)
+        {
+            results[n][i] = 0.0;
+        }
+    }
     for (int i = 0; i < nspace; i++)
     {
         results[0][i] = Tint;
@@ -66,18 +73,17 @@ int main(int argc, char **argv)
             }
         }
     }
-
     if (npes == 2)
     {
         int newnspace = nspace / 2;
-        cout << "New : " << newnspace << endl;
+        printf("new nspace : %d\n", newnspace);
         double boundary_value_p1;
         double boundary_value_p2;
 
-        MPI_Type_vector(ntime, 1, newnspace, MPI_DOUBLE, &stype);
-        MPI_Type_commit(&stype);
+        // MPI_Type_vector(ntime, 1, newnspace, MPI_DOUBLE, &stype);
+        // MPI_Type_commit(&stype);
 
-        vector<vector<double> > p_results(ntime, vector<double>(newnspace));
+        double p_results[ntime][newnspace];
         // INITIALISATION : FILL MATRIX WITH 0 AND BOUNDARY CONDITIONS
         for (int i = 0; i < ntime; i++)
         {
@@ -105,37 +111,35 @@ int main(int argc, char **argv)
             {
                 boundary_value_p1 = p_results[n - 1][newnspace - 1];
                 MPI_Send(&boundary_value_p1, 1, MPI_DOUBLE, 1, 0, MPI_COMM_WORLD);
-                cout << "Out of process " << myrank << ", sent." << endl;
                 MPI_Recv(&boundary_value_p2, 1, MPI_DOUBLE, 1, 1, MPI_COMM_WORLD, &status);
-                cout << "Out of process " << myrank << ", received." << endl;
                 p_results[n][newnspace - 1] = p_results[n - 1][newnspace - 1] + r * (boundary_value_p2 - 2 * p_results[n - 1][newnspace - 1] + p_results[n - 1][newnspace - 2]);
-            } else if (myrank == 1) {
+            }
+            else if (myrank == 1)
+            {
                 boundary_value_p2 = p_results[n - 1][0];
                 MPI_Send(&boundary_value_p2, 1, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD);
-                cout << "Out of process " << myrank << ", sent." << endl;
                 MPI_Recv(&boundary_value_p1, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, &status);
-                cout << "Out of process " << myrank << ", received." << endl;
-                // results2[n][0] = boundary_value_p1;
                 p_results[n][0] = p_results[n - 1][0] + r * (p_results[n - 1][1] - 2 * p_results[n - 1][0] + boundary_value_p1);
             }
         }
-        print_matrix(p_results, newnspace, ntime);
-        // PUTTING BACK RESULTS MATRIX INSIDE MAIN RESULTS
+
+        // ALL RESULTS ARE GATHERED ON PROCESSOR 0
         for (int i = 0; i < ntime; i++)
         {
-            for (int j = 0; j < newnspace; j++)
-            {
-                if (myrank == 0)
-                    results[i][j] = p_results[i][j];
-                else if (myrank == 1)
-                    results[i][j + newnspace] = p_results[i][j];
-            }
+            MPI_Gather(p_results[i], newnspace, MPI_DOUBLE, results[i], newnspace, MPI_DOUBLE, 0, MPI_COMM_WORLD);
         }
     }
-
-    // Stop MPI
+    if (myrank == 0)
+    {
+        for (int i = 0; i < ntime; i++)
+        {
+            printf("rank : %d, line %d : ", myrank, i + 1);
+            for (int j = 0; j < nspace; j++)
+            {
+                printf("%3.2f ", results[i][j]);
+            }
+            printf("\n");
+        }
+    }
     MPI_Finalize();
-    print_matrix(results, nspace, ntime);
-
-    return 0;
 }
