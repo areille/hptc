@@ -14,8 +14,8 @@ int main(int argc, char *argv[])
 
     // Initialization
     double D = 0.1;
-    double dx = 0.5;
-    double dt = 0.1;
+    double dx = 0.05;
+    double dt = 0.01;
     double L = 1.0;
     double T = 1.0;
     double r = D * dt / pow(dx, 2);
@@ -106,18 +106,18 @@ int main(int argc, char *argv[])
                 {
                     if (myrank == prl)
                     {
-                        printf("prl : %d\n", prl);
                         boundary_mine = p_results[n - 1][newspace - 1];
                         if (myrank < npes - 1)
-                            MPI_Send(&boundary_mine, 1, MPI_DOUBLE, myrank + 1, 0, MPI_COMM_WORLD);
-                        if (myrank > 1)
                         {
-                            MPI_Recv(&boundary_rcv, 1, MPI_DOUBLE, myrank - 1, 0, MPI_COMM_WORLD, &status);
-                            p_results[n][newspace - 1] = p_results[n - 1][newspace - 1] + r * (boundary_rcv - 2 * p_results[n - 1][newspace - 1] + p_results[n - 1][newspace - 2]);
+                            MPI_Send(&boundary_mine, 1, MPI_DOUBLE, myrank + 1, 0, MPI_COMM_WORLD);
+                            MPI_Recv(&boundary_rcv, 1, MPI_DOUBLE, myrank + 1, 0, MPI_COMM_WORLD, &status);
+                            if (newspace != 1)
+                                p_results[n][newspace - 1] = p_results[n - 1][newspace - 1] + r * (boundary_rcv - 2 * p_results[n - 1][newspace - 1] + p_results[n - 1][newspace - 2]);
                         }
                     }
                     if (myrank == prl + 1)
                     {
+                        MPI_Send(&boundary_mine, 1, MPI_DOUBLE, myrank - 1, 0, MPI_COMM_WORLD);
                         MPI_Recv(&boundary_rcv, 1, MPI_DOUBLE, myrank - 1, 0, MPI_COMM_WORLD, &status);
                         p_results[n][newspace - 1] = p_results[n - 1][newspace - 1] + r * (boundary_rcv - 2 * p_results[n - 1][newspace - 1] + p_results[n - 1][newspace - 2]);
                     }
@@ -126,22 +126,27 @@ int main(int argc, char *argv[])
                 {
                     if (myrank == prr)
                     {
-                        printf("prr : %d\n", prr);
                         boundary_mine = p_results[n - 1][0];
                         if (myrank > 1)
-                            MPI_Send(&boundary_mine, 1, MPI_DOUBLE, myrank - 1, 1, MPI_COMM_WORLD);
-                        if (myrank < npes - 1)
                         {
-                            MPI_Recv(&boundary_rcv, 1, MPI_DOUBLE, myrank + 1, 1, MPI_COMM_WORLD, &status);
-                            p_results[n][0] = p_results[n - 1][0] + r * (p_results[n - 1][1] - 2 * p_results[n - 1][0] + boundary_rcv);
+                            MPI_Send(&boundary_mine, 1, MPI_DOUBLE, myrank - 1, 1, MPI_COMM_WORLD);
+                            MPI_Recv(&boundary_rcv, 1, MPI_DOUBLE, myrank - 1, 1, MPI_COMM_WORLD, &status);
+                            if (newspace != 1)
+                                p_results[n][0] = p_results[n - 1][0] + r * (p_results[n - 1][1] - 2 * p_results[n - 1][0] + boundary_rcv);
                         }
                     }
                     if (myrank == prr - 1)
                     {
+                        MPI_Send(&boundary_mine, 1, MPI_DOUBLE, myrank + 1, 1, MPI_COMM_WORLD);
                         MPI_Recv(&boundary_rcv, 1, MPI_DOUBLE, myrank + 1, 1, MPI_COMM_WORLD, &status);
                         p_results[n][0] = p_results[n - 1][0] + r * (p_results[n - 1][1] - 2 * p_results[n - 1][0] + boundary_rcv);
                     }
                 }
+            }
+            // ALL RESULTS ARE GATHERED ON PROCESSOR 0
+            for (int i = 0; i < ntime; i++)
+            {
+                MPI_Gather(p_results[i], newspace, MPI_DOUBLE, results[i], newspace, MPI_DOUBLE, 0, MPI_COMM_WORLD);
             }
             // OUTPUT: PRINTS PARTICULAR RESULTS
             for (int i = 0; i < ntime; i++)
@@ -158,6 +163,15 @@ int main(int argc, char *argv[])
         {
         }
     }
-
+    if (root)
+        for (int i = 0; i < ntime; i++)
+        {
+            printf("rank : %d, line %d : ", myrank, i + 1);
+            for (int j = 0; j < nspace; j++)
+            {
+                printf("%3.2f ", results[i][j]);
+            }
+            printf("\n");
+        }
     MPI_Finalize();
 }
