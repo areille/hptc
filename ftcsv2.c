@@ -14,8 +14,8 @@ int main(int argc, char *argv[])
 
     // Initialization
     double D = 0.1;
-    double dx = 0.05;
-    double dt = 0.01;
+    double dx = 0.5;
+    double dt = 0.1;
     double L = 1.0;
     double T = 1.0;
     double r = D * dt / pow(dx, 2);
