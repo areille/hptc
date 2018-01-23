@@ -14,8 +14,8 @@ int main(int argc, char *argv[])
 
     // Initialization
     double D = 0.1;
-    double dx = 0.05;
-    double dt = 0.01;
+    double dx = 0.5;
+    double dt = 0.1;
     double L = 1.0;
     double T = 1.0;
     double r = D * dt / pow(dx, 2);
@@ -81,9 +81,14 @@ int main(int argc, char *argv[])
     if (npes > nspace)
     {
         if (root)
+        {
+            printf("\n");
             printf("Too much processors for considered problem.\n");
+            exit(-1);
+        }
+
     }
-    else if (npes == 1)
+    else if (npes == 1 ||npes == nspace)
     {
         if (root)
             for (int n = 1; n < ntime; n++)
@@ -110,11 +115,11 @@ int main(int argc, char *argv[])
         if (nspace % npes == 0)
         {
             int newspace = nspace / npes;
-            double p_results[ntime+1][newspace + 2];
+            double p_results[ntime + 1][newspace + 2];
             if (root)
                 printf("newspace : %d\n", newspace);
             // INITIALISATION : FILL MATRIX WITH 0 AND BOUNDARY CONDITIONS
-            for (int i = 0; i < ntime; i++)
+            for (int i = 0; i <= ntime; i++)
             {
                 for (int j = 0; j <= newspace; j++)
                 {
@@ -128,56 +133,21 @@ int main(int argc, char *argv[])
                     p_results[i][0] = Text;
                 if (myrank == npes - 1)
                     p_results[i][newspace - 1] = Text;
+
+                // for (int i = 0; i < ntime; i++)
+                // {
+                //     printf("rank : %d, line %d : ", myrank, i + 1);
+                //     for (int j = 0; j < newspace; j++)
+                //     {
+                //         printf("%3.2f ", p_results[i][j]);
+                //     }
+                //     printf("\n");
+                // }
             }
 
             // FILL UP LINE 1 to NTIME
             for (int n = 1; n <= ntime; n++)
             {
-                // // FILL UP COLUMN 1 FIRST THEN THE OTHERS UNTIL MISSING VALUE
-                // for (int i = 1; i < newspace - 1; i++)
-                // {
-                //     p_results[n][i] = p_results[n - 1][i] + r * (p_results[n - 1][i + 1] - 2 * p_results[n - 1][i] + p_results[n - 1][i - 1]);
-                // }
-                // for (int prl = 0; prl < (npes - 1) / 2; prl++)
-                // {
-                //     if (myrank == prl)
-                //     {
-                //         boundary_mine = p_results[n - 1][newspace - 1];
-                //         if (myrank < npes - 1)
-                //         {
-                //             MPI_Send(&boundary_mine, 1, MPI_DOUBLE, myrank + 1, 0, MPI_COMM_WORLD);
-                //             MPI_Recv(&boundary_rcv, 1, MPI_DOUBLE, myrank + 1, 0, MPI_COMM_WORLD, &status);
-                //             if (newspace != 1)
-                //                 p_results[n][newspace - 1] = p_results[n - 1][newspace - 1] + r * (boundary_rcv - 2 * p_results[n - 1][newspace - 1] + p_results[n - 1][newspace - 2]);
-                //         }
-                //     }
-                //     if (myrank == prl + 1)
-                //     {
-                //         MPI_Send(&boundary_mine, 1, MPI_DOUBLE, myrank - 1, 0, MPI_COMM_WORLD);
-                //         MPI_Recv(&boundary_rcv, 1, MPI_DOUBLE, myrank - 1, 0, MPI_COMM_WORLD, &status);
-                //         p_results[n][newspace - 1] = p_results[n - 1][newspace - 1] + r * (boundary_rcv - 2 * p_results[n - 1][newspace - 1] + p_results[n - 1][newspace - 2]);
-                //     }
-                // }
-                // for (int prr = npes - 1; prr > (npes - 1) / 2; prr--)
-                // {
-                //     if (myrank == prr)
-                //     {
-                //         boundary_mine = p_results[n - 1][0];
-                //         if (myrank > 1)
-                //         {
-                //             MPI_Send(&boundary_mine, 1, MPI_DOUBLE, myrank - 1, 1, MPI_COMM_WORLD);
-                //             MPI_Recv(&boundary_rcv, 1, MPI_DOUBLE, myrank - 1, 1, MPI_COMM_WORLD, &status);
-                //             if (newspace != 1)
-                //                 p_results[n][0] = p_results[n - 1][0] + r * (p_results[n - 1][1] - 2 * p_results[n - 1][0] + boundary_rcv);
-                //         }
-                //     }
-                //     if (myrank == prr - 1)
-                //     {
-                //         MPI_Send(&boundary_mine, 1, MPI_DOUBLE, myrank + 1, 1, MPI_COMM_WORLD);
-                //         MPI_Recv(&boundary_rcv, 1, MPI_DOUBLE, myrank + 1, 1, MPI_COMM_WORLD, &status);
-                //         p_results[n][0] = p_results[n - 1][0] + r * (p_results[n - 1][1] - 2 * p_results[n - 1][0] + boundary_rcv);
-                //     }
-                // }
                 if (myrank > 0)
                 {
                     tag = 1;
