@@ -110,7 +110,7 @@ int main(int argc, char *argv[])
         if (nspace % npes == 0)
         {
             int newspace = nspace / npes;
-            double p_results[ntime][newspace + 2];
+            double p_results[ntime+1][newspace + 2];
             if (root)
                 printf("newspace : %d\n", newspace);
             // INITIALISATION : FILL MATRIX WITH 0 AND BOUNDARY CONDITIONS
@@ -131,7 +131,7 @@ int main(int argc, char *argv[])
             }
 
             // FILL UP LINE 1 to NTIME
-            for (int n = 1; n < ntime; n++)
+            for (int n = 1; n <= ntime; n++)
             {
                 // // FILL UP COLUMN 1 FIRST THEN THE OTHERS UNTIL MISSING VALUE
                 // for (int i = 1; i < newspace - 1; i++)
@@ -201,15 +201,6 @@ int main(int argc, char *argv[])
                 for (int i = 1; i <= newspace; i++)
                 {
                     p_results[n][i] = p_results[n - 1][i] + r * (p_results[n - 1][i + 1] - 2 * p_results[n - 1][i] + p_results[n - 1][i - 1]);
-                }
-                for (int i = 0; i < ntime; i++)
-                {
-                    printf("rank : %d, line %d : ", myrank, i + 1);
-                    for (int j = 0; j < newspace; j++)
-                    {
-                        printf("%3.2f ", p_results[i][j]);
-                    }
-                    printf("\n");
                 }
 
                 // MPI_Gather(p_results[n], newspace, MPI_DOUBLE, results[n], newspace, MPI_DOUBLE, 0, MPI_COMM_WORLD);
