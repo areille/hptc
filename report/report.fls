@@ -129,6 +129,15 @@ OUTPUT report.lol
 INPUT /usr/local/texlive/2017/texmf-dist/tex/latex/base/omscmr.fd
 INPUT /usr/local/texlive/2017/texmf-dist/tex/latex/base/omscmr.fd
 INPUT /usr/local/texlive/2017/texmf-dist/fonts/tfm/public/cm/cmbx12.tfm
+INPUT ressources/stencil_explicit.png
+INPUT ./ressources/stencil_explicit.png
+INPUT ./ressources/stencil_explicit.png
+INPUT ressources/separation.png
+INPUT ./ressources/separation.png
+INPUT ./ressources/separation.png
+INPUT ressources/parallel_explicit.png
+INPUT ./ressources/parallel_explicit.png
+INPUT ./ressources/parallel_explicit.png
 INPUT /usr/local/texlive/2017/texmf-dist/fonts/tfm/public/cm/cmti10.tfm
 INPUT /usr/local/texlive/2017/texmf-dist/fonts/tfm/public/cm/cmtt10.tfm
 INPUT report.aux

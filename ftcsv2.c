@@ -16,8 +16,8 @@ int main(int argc, char *argv[])
 
     // Initialization
     double D = 0.1;
-    double dx = 0.5;
-    double dt = 0.1;
+    double dx = 0.05;
+    double dt = 0.01;
     double L = 1.0;
     double T = 1.0;
     double r = D * dt / pow(dx, 2);
@@ -178,6 +178,8 @@ int main(int argc, char *argv[])
                     p_results[n][0] = Text;
                 if (myrank == npes - 1)
                     p_results[n][newspace - 1] = Text;
+                
+                // MPI_Gather(p_results[n], newspace, MPI_DOUBLE, results[n], newspace, MPI_DOUBLE, 0, MPI_COMM_WORLD);
             }
             // ALL RESULTS ARE GATHERED ON PROCESSOR 0
             for (int i = 0; i < ntime; i++)

@@ -23,11 +23,12 @@
         % Abstract
         \begin{abstract}
             A one-space dimensional problem is considered, to examine the application
-            of numerical schemes for the solution of partial differential equations.
-            The Dufort-Frankel, Richardson, Laasonen and Crank-Nicolson schemes are implemented,
-            considered, and compared to the analytical solution of the one-space problem.
-            The effect of the time step is investigated for the Laasonen scheme.
-            \\ An object oriented designed C++ code is implemented to point out results.
+            of distributed memory parallel programming techniques for the numerical 
+            solution of the heat conduction equation.
+            % The Dufort-Frankel, Richardson, Laasonen and Crank-Nicolson schemes are implemented,
+            % considered, and compared to the analytical solution of the one-space problem.
+            % The effect of the time step is investigated for the Laasonen scheme.
+            % \\ An object oriented designed C++ code is implemented to point out results.
         \end{abstract}
     
         % Table of contents
@@ -54,10 +55,13 @@
             $\Delta t$ . . . Time step\\
             $\delta x$ . . . . partial derivative according to space\\
             $\delta t$ . . . . partial derivative according to time\\
+            $n_{space}$. . .  number of iterations over space\\
+            $n_{pes}$. . . . number of processors\\
         % Introduction
         \newpage
         \section{Introduction}
     
+        % --------- TODO --------- 
         A PDE (Partial Differential Equation) is an equation which includes derivatives of an unknown function, with at least 2 variables.
         PDEs can describe the behavior of lot of engineering phenomena \cite{pde}, that's why it is important to 
         known how to resolve them computationally. One way to resolve PDEs is to discretize the problem into
@@ -78,13 +82,12 @@
         % Methods / Procedures
         \newpage
         \section{Methods}
-            Our study results are to be stored in some matrixes, each matrix corresponding to one scheme.\\
+            Our study results are to be stored in some matrixes, each matrix corresponding to one method.\\
             Several schemes are used :
             \begin{itemize}
-                \item{Dufort-Frankel}
-                \item{Richardson}
-                \item{Laasonen simple implicit}
-                \item{Crank-Nicholson}
+                \item{FTCS simple explicit (forward time, central space, explicit)}
+                \item{Laasonen simple implicit (forward time, central space, implicit)}
+                \item{Crank-Nicholson (Trapezoidal)}
             \end{itemize}
             For all of the used schemes, the initialization of the result matrix is run the same way.
             First the study grid must be chosen. The initials conditions are:
@@ -93,7 +96,11 @@
                 \item{$T_{sur}$ of 300$^{\circ}$F}
                 \item{$D = 0.1 ft^{2}/hr$}
             \end{itemize}
-            First it was assumed that $\Delta x = 0.05$ and $\Delta t = 0.01$,
+            For each methods two sets of step size are to be used:
+            \begin{enumerate}
+                \item{$\Delta x = 0.5$ and $\Delta t = 0.1$} 
+                \item{$\Delta x = 0.005$ and $\Delta t = 0.001$} 
+            \end{enumerate}
             so that the result matrix could be initialized.
             We set:
             \begin{equation}
@@ -117,46 +124,80 @@
                 \end{blockarray}
             \]
             This is how the matrix is initialized, according to initial conditions.
-            For most of the used schemes, we need two previous time steps to calculate the current step.
-            An order one scheme (FTCS) is used to find the second line of the matrix:
+
+            % For most of the used schemes, we need two previous time steps to calculate the current step.
+            % An order one scheme (FTCS) is used to find the second line of the matrix:
+            % \begin{equation}
+            %     T_{i,1} = \frac{\alpha}{2} (T_{i+1,0} + T_{i-1,0}) + (1-\alpha)T_{i,0}
+            % \end{equation}
+            % with $$\alpha = 2\frac{D\delta t}{\delta x^{2}}$$
+            % So we have:
+            % \[
+            %     \begin{blockarray}{cccccc}
+            %     i = 0 & i = 1 & \cdots & n_{space}-1 & n_{space} \\
+            %     \begin{block}{(ccccc)c}
+            %       T_{ext} & T_{int} & \cdots & T_{int} & T_{ext} & j=0 \\
+            %       T_{ext} & T_{i,1} & \cdots & T_{i,1} & T_{ext} & j=1 \\
+            %       \vdots & \vdots & \ddots & \vdots & \vdots & \vdots \\
+            %       T_{ext} & 0 & \cdots & 0 & T_{ext} & n_{time} \\
+            %     \end{block}
+            %     \end{blockarray}
+            % \]
+            % With this trick our matrix is ready to be used and filled up with every scheme.
+    
+            \subsection{FTCS simple explicit}
+                
+            In order to perform the parallelization, we assume that the number of 
+            space steps can be divided by the number of processors. The number of
+            space steps divided by the number of processors defines the new space
+            step for each processor:
             \begin{equation}
-                T_{i,1} = \frac{\alpha}{2} (T_{i+1,0} + T_{i-1,0}) + (1-\alpha)T_{i,0}
+                n'_{space} = \frac{n_{space}}{n_{pes}}
             \end{equation}
-            with $$\alpha = 2\frac{D\delta t}{\delta x^{2}}$$
-            So we have:
-            \[
-                \begin{blockarray}{cccccc}
-                i = 0 & i = 1 & \cdots & n_{space}-1 & n_{space} \\
-                \begin{block}{(ccccc)c}
-                  T_{ext} & T_{int} & \cdots & T_{int} & T_{ext} & j=0 \\
-                  T_{ext} & T_{i,1} & \cdots & T_{i,1} & T_{ext} & j=1 \\
-                  \vdots & \vdots & \ddots & \vdots & \vdots & \vdots \\
-                  T_{ext} & 0 & \cdots & 0 & T_{ext} & n_{time} \\
-                \end{block}
-                \end{blockarray}
-            \]
-            With this trick our matrix is ready to be used and filled up with every scheme.
-    
-            \subsection{Explicit schemes}
-                For both of the explicit schemes used (Dufort-Frankel and Richardson schemes), the solving
-                is run the same way : with a double for-loop, the matrix is filled up. The only thing that change
-                is the way we advance through time and space.
-    
-                \subsubsection{Dufort-Frankel}
-                    Explicitly, for Dufort-Frankel method, we have:
-                    \begin{equation}
-                        \label{eq:df}
-                        T_{j}^{n+1} = (\frac{1-\alpha}{1+\alpha})T_{j}^{n-1} + (\frac{\alpha}{1+\alpha})(T_{j+1}^{n}+T_{j-1}^{n})
-                    \end{equation}
-                    with $$\alpha = 2\frac{D\delta t}{\delta x^{2}}$$
-    
-                \subsubsection{Richardson}
-                    Explicitly, for Richardson method, we have:
-                    \begin{equation}
-                        \label{eq:rich}
-                        T_{j}^{n+1} = T_{j}^{n-1} + \alpha (T_{j-1}^{n} - 2T_{j}^{n} + T_{j+1}^{n})
-                    \end{equation}
-                    with $$\alpha = 2\frac{D\delta t}{\delta x^{2}}$$
+            The stencil for FTCS explicit scheme is the following:
+            \begin{figure}[H]
+                \includegraphics[width=4cm]{stencil_explicit.png}
+                \centering
+                \caption{Stencil for FTCS explicit scheme}
+            \end{figure}
+
+            That means that to calculate a temperature for a time step and a space
+            step, we need some previous values in time : the value in space, 
+            which we can access easily, and the previous and next values in space.
+            That was the main problem for parallelizing this problem. The way we managed
+            it is the following.\\
+            For each processor, a vector of size $[n'_{space} + 2]$ is created. The size is incremented
+            by 2 because each vector will contain 2 "ghost" values (will be explained later).\\
+            The first vector will be our boundary values vector, so we fill this vector
+            with $T_{int}$.\\
+            For the first and last processor respectively, the first and last value of the vector are
+            replaced by $T_{ext}$.\\
+            For example, for $n_{space} = 12$ and $n_{pes} = 4$, at $t=0h$ we have :
+            \begin{figure}[H]
+                \includegraphics[width=\textwidth]{separation.png}
+                \caption{Separation at t=0h}
+            \end{figure}
+
+            At each time step, each processor perform 4 MPI actions:
+            \begin{itemize}
+                \item{it sends its first value to the previous processor (MPI\_Send()) }
+                \item{it receives the first value of the next processor (MPI\_Receive())}
+                \item{it sends its last value to the next processor (MPI\_Send())}
+                \item{it receives the first value of the previous processor (MPI\_Receive())}
+            \end{itemize}
+            N-B : In the previous explanation, ghost values are not considered : they are only used
+            to store the values received from neighbour processors.\\
+            In Figure 3, we can see which values are exchanged at the boundaries, in order to
+            calculate the next boundary value. This pattern is due to the stencil : to continue
+            with the example of the Figure 3, in order to calculate the value of $h[1]$ at time step
+            $t+\Delta{t}$, the processor needs the $h[0]$ value, which comes from the previous processor.
+            \begin{figure}[H]
+                \includegraphics[width=\textwidth]{parallel_explicit.png}
+                \caption{Exchanges between processors at each time step}
+            \end{figure}
+
+            Calculated values are gathered (MPI\_Gather()) in the final result matrix, which is stored in root processor.
+
     
             \subsection{Implicit schemes}
     
