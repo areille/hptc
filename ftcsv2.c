@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <math.h>
 
+// TRY TO DO IT WRITING DIRECTLY IN A FILE
+
 int main(int argc, char *argv[])
 {
     // MPI things
@@ -26,9 +28,7 @@ int main(int argc, char *argv[])
     int nspace = L / dx + 1;
     int root;
     if (myrank == 0)
-    {
         root = 1;
-    }
     else
         root = 0;
 
