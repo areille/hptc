@@ -41,6 +41,141 @@ void thomasAlg(const double *a, const double *b, double *c, double *d, double *x
         x[i] = d[i] - c[i] * x[i + 1];
 }
 
+void thomasAlg_parallel(int myrank, int npes, int N, double *b, double *a, double *c, double *x, double *q)
+{
+    int i, j, k, i_global;
+    int rows_local, local_offset;
+    double S[2][2], T[2][2], s1tmp, s2tmp;
+    double l[N], d[N], y[N];
+    MPI_Status status;
+
+    for (i = 0; i < N; i++)
+    {
+        l[i] = 0.0;
+        d[i] = 0.0;
+        y[i] = 0.0;
+    }
+    S[0][0] = 1.0;
+    S[1][1] = 1.0;
+    S[1][0] = 0.0;
+    S[0][1] = 0.0;
+    rows_local = (int)floor(N / npes);
+    local_offset = myrank * rows_local;
+
+    //
+    if (myrank == 0)
+    {
+        s1tmp = a[local_offset] * S[0][0];
+        S[1][0] = S[0][0];
+        S[1][1] = S[0][1];
+        S[0][1] = a[local_offset] * S[0][1];
+        S[0][0] = s1tmp;
+        for (i = 1; i < rows_local; i++)
+        {
+            s1tmp = a[i + local_offset] * S[0][0] -
+                    b[i + local_offset - 1] * c[i + local_offset - 1] * S[1][0];
+            s2tmp = a[i + local_offset] * S[0][1] -
+                    b[i + local_offset - 1] * c[i + local_offset - 1] * S[1][1];
+            S[1][0] = S[0][0];
+            S[1][1] = S[0][1];
+            S[0][0] = s1tmp;
+            S[0][1] = s2tmp;
+        }
+    }
+    else
+    {
+        for (i = 0; i < rows_local; i++)
+        {
+            s1tmp = a[i + local_offset] * S[0][0] -
+                    b[i + local_offset - 1] * c[i + local_offset - 1] * S[1][0];
+            s2tmp = a[i + local_offset] * S[0][1] -
+                    b[i + local_offset - 1] * c[i + local_offset - 1] * S[1][1];
+            S[1][0] = S[0][0];
+            S[1][1] = S[0][1];
+            S[0][0] = s1tmp;
+            S[0][1] = s2tmp;
+        }
+    }
+    // Full-recursive doubling algorithm for distribution
+    for (i = 0; i <= log2(npes); i++)
+    {
+        if (myrank + pow(2, i) < npes)
+            MPI_Send(S, 4, MPI_DOUBLE, (int)(myrank + pow(2, i)), 0,
+                     MPI_COMM_WORLD);
+        if (myrank - pow(2, i) >= 0)
+        {
+            MPI_Recv(T, 4, MPI_DOUBLE, (int)(myrank - pow(2, i)), 0,
+                     MPI_COMM_WORLD, &status);
+            s1tmp = S[0][0] * T[0][0] + S[0][1] * T[1][0];
+            S[0][1] = S[0][0] * T[0][1] + S[0][1] * T[1][1];
+            S[0][0] = s1tmp;
+            s1tmp = S[1][0] * T[0][0] + S[1][1] * T[1][0];
+            S[1][1] = S[1][0] * T[0][1] + S[1][1] * T[1][1];
+            S[1][0] = s1tmp;
+        }
+    }
+    //Calculate last d_k first so that it can be distributed,
+    //and then do the distribution.
+    d[local_offset + rows_local - 1] = (S[0][0] + S[0][1]) / (S[1][0] + S[1][1]);
+    if (myrank == 0)
+    {
+        MPI_Send(&d[local_offset + rows_local - 1], 1, MPI_DOUBLE, 1, 0, MPI_COMM_WORLD);
+    }
+    else
+    {
+        MPI_Recv(&d[local_offset - 1], 1, MPI_DOUBLE, myrank - 1, 0, MPI_COMM_WORLD, &status);
+        if (myrank != npes - 1)
+            MPI_Send(&d[local_offset + rows_local - 1], 1, MPI_DOUBLE, myrank + 1, 0, MPI_COMM_WORLD);
+    }
+    // Compute in parallel the local values of d_k and l_k
+    if (myrank == 0)
+    {
+        l[0] = 0;
+        d[0] = a[0];
+        for (i = 1; i < rows_local - 1; i++)
+        {
+            l[local_offset + i] = b[local_offset + i - 1] / d[local_offset + i - 1];
+            d[local_offset + i] = a[local_offset + i] - l[local_offset + i] * c[local_offset + i - 1];
+        }
+        l[local_offset + rows_local - 1] = b[local_offset + rows_local - 2] / d[local_offset + rows_local - 2];
+    }
+    else
+    {
+        for (i = 0; i < rows_local - 1; i++)
+        {
+            l[local_offset + i] = b[local_offset + i - 1] / d[local_offset + i - 1];
+            d[local_offset + i] = a[local_offset + i] - l[local_offset + i] * c[local_offset + i - 1];
+        }
+        l[local_offset + rows_local - 1] = b[local_offset + rows_local - 2] / d[local_offset + rows_local - 2];
+    }
+    /***************************************************************/
+    if (myrank > 0)
+        d[local_offset - 1] = 0;
+    // Distribute d_k and l_k to all processes
+    double tmp[N];
+    for (i = 0; i < N; i++)
+        tmp[i] = d[i];
+    MPI_Allreduce(tmp, d, N, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    for (i = 0; i < N; i++)
+        tmp[i] = l[i];
+    MPI_Allreduce(tmp, l, N, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    if (myrank == 0)
+    {
+        /* Forward Substitution [L][y] = [q] */
+        y[0] = q[0];
+        for (i = 1; i < N; i++)
+            y[i] = q[i] - l[i] * y[i - 1];
+        /* Backward Substitution [U][x] = [y] */
+        x[N - 1] = y[N - 1] / d[N - 1];
+        for (i = N - 2; i >= 0; i--)
+        {
+            x[i] = (y[i] - c[i] * x[i + 1]) / d[i];
+            printf("Hello :) x[%d] = %3.2f\n", i, x[i]);
+        }
+    }
+    return;
+}
+
 int main(int argc, char *argv[])
 {
     // MPI THINGS
@@ -161,161 +296,60 @@ int main(int argc, char *argv[])
     {
         if (nspace % npes == 0)
         {
-            int newspace = nspace / npes;
-            double a[newspace];
-            double b[newspace];
-            double c[newspace];
-            double d[newspace];
-            double d_reduced[newspace];
-            double x[newspace];
-            double x_upper_h[newspace];
-            double x_lower_h[newspace];
-            double x_part[newspace];
-            for (int i = 0; i < newspace; i++)
+
+            double a[nspace - 2];
+            double b[nspace - 2];
+            double c[nspace - 2];
+            double c_copy[nspace - 2];
+            double x[nspace - 2];
+            double d[nspace];
+            double d_reduced[nspace - 2];
+            // Creating matrix C and vectors.
+            for (int i = 0; i < nspace - 2; i++)
             {
                 a[i] = -r;
                 c[i] = -r;
                 b[i] = 1 + 2 * r;
-                d[i] = Tint;
+                x[i] = 0.0;
             }
-            if (root)
-                d[0] = Text;
-            if (myrank == npes - 1)
-                d[newspace - 1] = Text;
+            a[0] = 0.0;
+            c[nspace - 3] = 0;
+
             for (int n = 1; n < ntime; n++)
             {
                 // COPY THE PREVIOUS T° LINE IN d
-                for (int i = 0; i < newspace; i++)
+                for (int i = 0; i < nspace; i++)
+                    d[i] = results[n - 1][i];
+                // CHANGES THE BOUNDARIES VALUES
+                d[1] += r * d[0];
+                d[nspace - 2] += r * d[nspace - 1];
+                for (int i = 0; i < nspace - 2; i++)
                 {
-                    d[i] = results[n][myrank * newspace + i];
-                    if (root)
-                        d[0] += r * Text;
-                    if (myrank == npes - 1)
-                        d[newspace - 1] += r * Text;
+                    // COPY THE REDUCED VECTOR IN d_reduced
+                    d_reduced[i] = d[i + 1];
+                    // COPY GOOD VALUE OF C
+                    c_copy[i] = c[i];
                 }
+                // RESOLVES a[i]x[i-1]+b[i]x[i]+c[i]x[i+1] = d[i] // WARNING : C AND X ARE MODIFIED
+                thomasAlg_parallel(myrank, npes, nspace - 2, b, a, c_copy, x, d_reduced);
 
-                // STEP 1 .........
-                // FORWARD ELIMINATION
-                x_upper_h[0] = c[0] / b[0];
-                x_lower_h[0] = d[0] / b[0];
-                for (int i = 1; i < newspace; i++)
-                {
-                    double denom = b[i] - c[i] * x_upper_h[i - 1];
-                    if (!denom)
-                    {
-                        printf("Division by 0. Aborted.\n");
-                        exit(-1);
-                    }
-                    else
-                    {
-
-                        x_upper_h[i] = c[i] / denom;
-                        x_lower_h[i] = (d[i] - a[i] * x_lower_h[i - 1]) / denom;
-                    }
-                }
-                // BACK SUBSTITUTION
-                x_part[newspace - 1] = x_lower_h[newspace - 1];
-                x_lower_h[newspace - 1] = -x_upper_h[newspace - 1];
-                x_upper_h[newspace - 1] = a[newspace - 1] / b[newspace - 1];
-                for (int i = newspace - 2; i > 0; i--)
-                {
-                    x_part[i] = x_lower_h[i] - x_upper_h[i] * x_part[i + 1];
-                    x_lower_h[i] = -x_upper_h[i] - x_lower_h[i + 1];
-                    double denom = b[i] - c[i] * x_upper_h[i - 1];
-                    if (!denom)
-                    {
-                        printf("Division by 0. Aborted.\n");
-                        exit(-1);
-                    }
-                    else
-                    {
-                        x_upper_h[i] = -a[i] / denom;
-                    }
-                }
-                // FORWARD SUBSTITUTION
-                x_upper_h[0] = -x_upper_h[0];
-                for (int i = 1; i < newspace; i++)
-                {
-                    x_upper_h[i] = -x_upper_h[i] * x_upper_h[i - 1];
-                }
-
-                // STEP 2..........
-
-                double OutData[8*npes];
-                OutData[0] = -1.0;
-                OutData[1] = x_upper_h[0];
-                OutData[2] = x_lower_h[0];
-                OutData[3] = -x_part[0];
-                OutData[4] = x_upper_h[newspace - 1];
-                OutData[5] = x_lower_h[newspace - 1];
-                OutData[6] = -1.0;
-                OutData[7] = -x_part[newspace - 1];
-
-                // CONCATENATE OUTDATA ARRAYS
-                double log2p = log(npes) / log(2);
-                if (pow(2, log2p) == npes)
-                    log2p++;
-                for (int i = 0; i < log2p; i++)
-                {
-                    int nxfer = 8 * pow(2, i);
-                    double toP = (myrank - (int)pow(2, i) + 2 * npes) % npes;
-                    double frP = (myrank + (int)pow(2, i)) % npes;
-                    MPI_Isend(OutData, nxfer, MPI_DOUBLE, toP, 0, MPI_COMM_WORLD, &request);
-                    MPI_Recv(&OutData[nxfer + 1], nxfer, MPI_DOUBLE, frP, 0, MPI_COMM_WORLD, &status);
-                }
-                double reduca[2 * npes - 2];
-                double reducb[2 * npes - 2];
-                double reducc[2 * npes - 2];
-                double reducr[2 * npes - 2];
-                double coeff[2 * npes - 2];
-                // PUT OUTDATA INTO REDUCED TRIDIAGONAL FORM
-                int nsig = 8 * npes;
-                int ifirst = 8 * (npes - myrank) + 5;
-                for (int i = 0; i < 2 * npes - 2; i++)
-                {
-                    int ibase = (ifirst + 4 * (i - 1)) % nsig;
-                    printf("ibase = %d\n", ibase);
-                    reduca[i] = OutData[ibase - 1];
-                    reducb[i] = OutData[ibase];
-                    reducc[i] = OutData[ibase + 1];
-                    reducr[i] = OutData[ibase + 2];
-                }
-                thomasAlg(reduca, reducb, reducc, reducr, coeff, 2 * npes - 2);
-                int upper_coeff, lower_coeff;
-                if (myrank != 0)
-                    upper_coeff = coeff[2 * myrank - 2];
-                else
-                    upper_coeff = 0;
-                if (myrank != npes)
-                    lower_coeff = coeff[2 * myrank - 1];
-                else
-                    lower_coeff = 0;
-
-                // printf("From rank %d \n", myrank);
-                for (int i = 0; i < newspace; i++)
-                {
-                    x[i] = x_part[i] + upper_coeff * x_upper_h[i] + lower_coeff * x_lower_h[i];
-                    // printf("%3.2f ", x[i]);
-                }
-                // printf("\n");
-
-                MPI_Gather(x, newspace, MPI_DOUBLE, results[n], newspace, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+                // COPY THE RESULT x INTO RESULTS MATRIX
+                for (int i = 0; i < nspace - 2; i++)
+                    results[n][i + 1] = x[i];
                 results[n][0] = Text;
                 results[n][nspace - 1] = Text;
             }
-            // ALL RESULTS ARE GATHERED ON PROCESSOR 0
-            // for (int i = 0; i < ntime; i++)
-            // {
-            // }
             if (root)
             {
-                for (int n = 0; n < ntime; n++)
+                printf("\n\n");
+                printf("Results matrix : \n\n");
+                for (int i = 0; i < ntime; i++)
                 {
-                    printf("\n");
-                    for (int i = 0; i < nspace; i++)
+                    for (int j = 0; j < nspace; j++)
                     {
-                        printf("%3.2f ", results[n][i]);
+                        printf("%3.2f ", results[i][j]);
                     }
+                    printf("\n");
                 }
             }
         }

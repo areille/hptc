@@ -82,7 +82,7 @@
         % Methods / Procedures
         \newpage
         \section{Methods}
-            Our study results are to be stored in some matrixes, each matrix corresponding to one method.\\
+            Our study results are to be stored in matrixes.
             Several schemes are used :
             \begin{itemize}
                 \item{FTCS simple explicit (forward time, central space, explicit)}
@@ -175,7 +175,7 @@
             For example, for $n_{space} = 12$ and $n_{pes} = 4$, at $t=0h$ we have :
             \begin{figure}[H]
                 \includegraphics[width=\textwidth]{separation.png}
-                \caption{Separation at t=0h}
+                \caption{Separation of values per processors at t=0h}
             \end{figure}
 
             At each time step, each processor perform 4 MPI actions:
@@ -196,7 +196,8 @@
                 \caption{Exchanges between processors at each time step}
             \end{figure}
 
-            Calculated values are gathered (MPI\_Gather()) in the final result matrix, which is stored in root processor.
+            Calculated values are gathered (MPI\_Gather()) in the final result matrix, which is stored 
+            and printed in root processor.
 
     
             \subsection{Implicit schemes}
@@ -302,22 +303,6 @@
                 \end{equation}
     
     
-                \subsection{Object Oriented Design}
-    
-                The object oriented classes for the C++ code are designed the following way :\\
-                \begin{figure}[H]
-                    % \includegraphics[width=\textwidth]{UML.png}
-                    \caption{UML Diagram of the C++ object oriented code}
-                \end{figure}
-                There is a main base class called PDESolve, which initializes all the variables, and two functions :
-                \begin{itemize}
-                    \item{get\_res() : returns the results Matrix}
-                    \item{solve() : virtual function which will be overwritten in subclasses}
-                \end{itemize}
-                There is two subclasses of PDESolve : PDEExplicit and PDEImplicit. Each one has a solve() function, and a virtual advance function,
-                which corresponds at the way the space and time steps are incrementded.
-                The PDEImplicit class also initializes all the matrixes and functions needed for the LU factorization and solve.
-                Each subsubclass, which corresponds to each method, has its own particular advance method.
         % Results
         \newpage
         \section{Results}
