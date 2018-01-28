@@ -44,52 +44,43 @@ void thomasAlg(const double *a, const double *b, double *c, double *d, double *x
 void thomasAlg_parallel(int myrank, int npes, int N, double *b, double *a, double *c, double *x, double *q)
 {
     int i, j, k, i_global;
-    int rows_local, local_offset;
+    int newspace, p_offset;
     double S[2][2], T[2][2], s1tmp, s2tmp;
-    double l[N], d[N], y[N];
     MPI_Status status;
-
+    double *l = (double *)malloc(N * sizeof(double));
+    double *d = (double *)malloc(N * sizeof(double));
+    double *y = (double *)malloc(N * sizeof(double));
     for (i = 0; i < N; i++)
-    {
-        l[i] = 0.0;
-        d[i] = 0.0;
-        y[i] = 0.0;
-    }
-    S[0][0] = 1.0;
-    S[1][1] = 1.0;
-    S[1][0] = 0.0;
-    S[0][1] = 0.0;
-    rows_local = (int)floor(N / npes);
-    local_offset = myrank * rows_local;
+        l[i] = d[i] = y[i] = 0.0;
+    S[0][0] = S[1][1] = 1.0;
+    S[1][0] = S[0][1] = 0.0;
+    newspace = (int)floor(N / npes);
+    p_offset = myrank * newspace;
 
-    //
+    // Form local products of R_k matrices
     if (myrank == 0)
     {
-        s1tmp = a[local_offset] * S[0][0];
+        s1tmp = a[p_offset] * S[0][0];
         S[1][0] = S[0][0];
         S[1][1] = S[0][1];
-        S[0][1] = a[local_offset] * S[0][1];
+        S[0][1] = a[p_offset] * S[0][1];
         S[0][0] = s1tmp;
-        for (i = 1; i < rows_local; i++)
+        for (i = 1; i < newspace; i++)
         {
-            s1tmp = a[i + local_offset] * S[0][0] -
-                    b[i + local_offset - 1] * c[i + local_offset - 1] * S[1][0];
-            s2tmp = a[i + local_offset] * S[0][1] -
-                    b[i + local_offset - 1] * c[i + local_offset - 1] * S[1][1];
+            s1tmp = a[i + p_offset] * S[0][0] - b[i + p_offset - 1] * c[i + p_offset - 1] * S[1][0];
+            s2tmp = a[i + p_offset] * S[0][1] - b[i + p_offset - 1] * c[i + p_offset - 1] * S[1][1];
             S[1][0] = S[0][0];
             S[1][1] = S[0][1];
             S[0][0] = s1tmp;
-            S[0][1] = s2tmp;
         }
+        S[0][1] = s2tmp;
     }
     else
     {
-        for (i = 0; i < rows_local; i++)
+        for (i = 0; i < newspace; i++)
         {
-            s1tmp = a[i + local_offset] * S[0][0] -
-                    b[i + local_offset - 1] * c[i + local_offset - 1] * S[1][0];
-            s2tmp = a[i + local_offset] * S[0][1] -
-                    b[i + local_offset - 1] * c[i + local_offset - 1] * S[1][1];
+            s1tmp = a[i + p_offset] * S[0][0] - b[i + p_offset - 1] * c[i + p_offset - 1] * S[1][0];
+            s2tmp = a[i + p_offset] * S[0][1] - b[i + p_offset - 1] * c[i + p_offset - 1] * S[1][1];
             S[1][0] = S[0][0];
             S[1][1] = S[0][1];
             S[0][0] = s1tmp;
@@ -100,12 +91,10 @@ void thomasAlg_parallel(int myrank, int npes, int N, double *b, double *a, doubl
     for (i = 0; i <= log2(npes); i++)
     {
         if (myrank + pow(2, i) < npes)
-            MPI_Send(S, 4, MPI_DOUBLE, (int)(myrank + pow(2, i)), 0,
-                     MPI_COMM_WORLD);
+            MPI_Send(S, 4, MPI_DOUBLE, (int)(myrank + pow(2, i)), 0, MPI_COMM_WORLD);
         if (myrank - pow(2, i) >= 0)
         {
-            MPI_Recv(T, 4, MPI_DOUBLE, (int)(myrank - pow(2, i)), 0,
-                     MPI_COMM_WORLD, &status);
+            MPI_Recv(T, 4, MPI_DOUBLE, (int)(myrank - pow(2, i)), 0, MPI_COMM_WORLD, &status);
             s1tmp = S[0][0] * T[0][0] + S[0][1] * T[1][0];
             S[0][1] = S[0][0] * T[0][1] + S[0][1] * T[1][1];
             S[0][0] = s1tmp;
@@ -114,68 +103,71 @@ void thomasAlg_parallel(int myrank, int npes, int N, double *b, double *a, doubl
             S[1][0] = s1tmp;
         }
     }
-    //Calculate last d_k first so that it can be distributed,
-    //and then do the distribution.
-    d[local_offset + rows_local - 1] = (S[0][0] + S[0][1]) / (S[1][0] + S[1][1]);
+    //Calculate last d_k first so that it can be distributed, //and then do the distribution.
+    d[p_offset + newspace - 1] = (S[0][0] + S[0][1]) / (S[1][0] + S[1][1]);
     if (myrank == 0)
     {
-        MPI_Send(&d[local_offset + rows_local - 1], 1, MPI_DOUBLE, 1, 0, MPI_COMM_WORLD);
+        MPI_Send(&d[p_offset + newspace - 1], 1, MPI_DOUBLE,
+                 1, 0, MPI_COMM_WORLD);
     }
     else
     {
-        MPI_Recv(&d[local_offset - 1], 1, MPI_DOUBLE, myrank - 1, 0, MPI_COMM_WORLD, &status);
+        MPI_Recv(&d[p_offset - 1], 1, MPI_DOUBLE, myrank - 1, 0, MPI_COMM_WORLD, &status);
         if (myrank != npes - 1)
-            MPI_Send(&d[local_offset + rows_local - 1], 1, MPI_DOUBLE, myrank + 1, 0, MPI_COMM_WORLD);
+            MPI_Send(&d[p_offset + newspace - 1], 1, MPI_DOUBLE,
+                     myrank + 1, 0, MPI_COMM_WORLD);
     }
     // Compute in parallel the local values of d_k and l_k
     if (myrank == 0)
     {
         l[0] = 0;
         d[0] = a[0];
-        for (i = 1; i < rows_local - 1; i++)
+        for (i = 1; i < newspace - 1; i++)
         {
-            l[local_offset + i] = b[local_offset + i - 1] / d[local_offset + i - 1];
-            d[local_offset + i] = a[local_offset + i] - l[local_offset + i] * c[local_offset + i - 1];
+            l[p_offset + i] = b[p_offset + i - 1] / d[p_offset + i - 1];
+            d[p_offset + i] = a[p_offset + i] - l[p_offset + i] * c[p_offset + i - 1];
         }
-        l[local_offset + rows_local - 1] = b[local_offset + rows_local - 2] / d[local_offset + rows_local - 2];
+        l[p_offset + newspace - 1] = b[p_offset + newspace - 2] /
+                                     d[p_offset + newspace - 2];
     }
     else
     {
-        for (i = 0; i < rows_local - 1; i++)
+        for (i = 0; i < newspace - 1; i++)
         {
-            l[local_offset + i] = b[local_offset + i - 1] / d[local_offset + i - 1];
-            d[local_offset + i] = a[local_offset + i] - l[local_offset + i] * c[local_offset + i - 1];
+            l[p_offset + i] = b[p_offset + i - 1] /
+                              d[p_offset + i - 1];
+            d[p_offset + i] = a[p_offset + i] -
+                              l[p_offset + i] * c[p_offset + i - 1];
         }
-        l[local_offset + rows_local - 1] = b[local_offset + rows_local - 2] / d[local_offset + rows_local - 2];
+        l[p_offset + newspace - 1] = b[p_offset + newspace - 2] /
+                                     d[p_offset + newspace - 2];
     }
     /***************************************************************/
     if (myrank > 0)
-        d[local_offset - 1] = 0;
+        d[p_offset - 1] = 0;
     // Distribute d_k and l_k to all processes
-    double tmp[N];
+    double *tmp = (double *)malloc(N * sizeof(double));
     for (i = 0; i < N; i++)
         tmp[i] = d[i];
     MPI_Allreduce(tmp, d, N, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
     for (i = 0; i < N; i++)
         tmp[i] = l[i];
     MPI_Allreduce(tmp, l, N, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    free(tmp);
     if (myrank == 0)
     {
-        /* Forward Substitution [L][y] = [q] */
-        y[0] = q[0];
+        /* Forward Substitution [L][y] = [q] */ y[0] = q[0];
         for (i = 1; i < N; i++)
             y[i] = q[i] - l[i] * y[i - 1];
-        /* Backward Substitution [U][x] = [y] */
-        x[N - 1] = y[N - 1] / d[N - 1];
+        /* Backward Substitution [U][x] = [y] */ x[N - 1] = y[N - 1] / d[N - 1];
         for (i = N - 2; i >= 0; i--)
-        {
             x[i] = (y[i] - c[i] * x[i + 1]) / d[i];
-            printf("Hello :) x[%d] = %3.2f\n", i, x[i]);
-        }
     }
+    free(l);
+    free(y);
+    free(d);
     return;
 }
-
 int main(int argc, char *argv[])
 {
     // MPI THINGS
@@ -188,8 +180,8 @@ int main(int argc, char *argv[])
 
     // Initialization
     double D = 0.1;
-    double dx = 0.2;
-    double dt = 0.1;
+    double dx = 0.04;
+    double dt = 0.01;
     double L = 1.0;
     double T = 1.0;
     double r = D * dt / pow(dx, 2);
@@ -294,8 +286,8 @@ int main(int argc, char *argv[])
     }
     else
     {
-        if (nspace % npes == 0)
-        {
+        // if (nspace % npes == 0)
+        // {
 
             double a[nspace - 2];
             double b[nspace - 2];
@@ -304,6 +296,7 @@ int main(int argc, char *argv[])
             double x[nspace - 2];
             double d[nspace];
             double d_reduced[nspace - 2];
+            int offset;
             // Creating matrix C and vectors.
             for (int i = 0; i < nspace - 2; i++)
             {
@@ -312,8 +305,6 @@ int main(int argc, char *argv[])
                 b[i] = 1 + 2 * r;
                 x[i] = 0.0;
             }
-            a[0] = 0.0;
-            c[nspace - 3] = 0;
 
             for (int n = 1; n < ntime; n++)
             {
@@ -331,7 +322,7 @@ int main(int argc, char *argv[])
                     c_copy[i] = c[i];
                 }
                 // RESOLVES a[i]x[i-1]+b[i]x[i]+c[i]x[i+1] = d[i] // WARNING : C AND X ARE MODIFIED
-                thomasAlg_parallel(myrank, npes, nspace - 2, b, a, c_copy, x, d_reduced);
+                thomasAlg_parallel(myrank, npes, nspace - 2, a, b, c_copy, x, d_reduced);
 
                 // COPY THE RESULT x INTO RESULTS MATRIX
                 for (int i = 0; i < nspace - 2; i++)
@@ -342,7 +333,7 @@ int main(int argc, char *argv[])
             if (root)
             {
                 printf("\n\n");
-                printf("Results matrix : \n\n");
+                printf("Results matrix ahem : \n\n");
                 for (int i = 0; i < ntime; i++)
                 {
                     for (int j = 0; j < nspace; j++)
@@ -359,6 +350,6 @@ int main(int argc, char *argv[])
         //     printf("\n");
         //     printf("-----TODO------\n");
         // }
-    }
+    // }
     MPI_Finalize();
 }
