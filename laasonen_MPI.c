@@ -244,7 +244,7 @@ int main(int argc, char *argv[])
             x[i] = 0.0;
         }
         a[0] = 0.0;
-        c[nspace - 3] = 0;
+        c[nspace - 3] = 0.0;
 
         for (int n = 1; n < ntime; n++)
         {

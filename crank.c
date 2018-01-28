@@ -98,7 +98,6 @@ int main(int argc, char *argv[])
     double f[nspace - 2];
     double g[nspace - 2];
     double c_copy[nspace - 2];
-    double g_copy[nspace - 2];
     double x[nspace - 2];
     double x_new[nspace - 2];
     double d[nspace];
@@ -130,7 +129,6 @@ int main(int argc, char *argv[])
             d_reduced[i] = d[i + 1];
             // COPY GOOD VALUE OF C
             c_copy[i] = c[i];
-            g_copy[i] = g[i];
         }
 
         // CALCULATING NEW VECTOR X

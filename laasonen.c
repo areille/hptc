@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
         x[i] = 0.0;
     }
     a[0] = 0.0;
-    c[nspace - 3] = 0;
+    c[nspace - 3] = 0.0;
 
     // for (int i = 0; i < nspace-2; i++)
     //     printf("x[%d]=%3.2f ", i, x[i]);
