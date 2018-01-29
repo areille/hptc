@@ -138,6 +138,12 @@ INPUT ./ressources/separation.png
 INPUT ressources/parallel_explicit.png
 INPUT ./ressources/parallel_explicit.png
 INPUT ./ressources/parallel_explicit.png
+INPUT ressources/step_size_1.png
+INPUT ./ressources/step_size_1.png
+INPUT ./ressources/step_size_1.png
+INPUT ressources/step_size_2.png
+INPUT ./ressources/step_size_2.png
+INPUT ./ressources/step_size_2.png
 INPUT /usr/local/texlive/2017/texmf-dist/fonts/tfm/public/cm/cmti10.tfm
 INPUT /usr/local/texlive/2017/texmf-dist/fonts/tfm/public/cm/cmtt10.tfm
 INPUT report.aux

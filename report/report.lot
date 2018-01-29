@@ -1,3 +1,2 @@
-\contentsline {table}{\numberline {1}{\ignorespaces Errors for different schemes at t = 0,1h\relax }}{10}{table.caption.10}
-\contentsline {table}{\numberline {2}{\ignorespaces Errors for different schemes at different times\relax }}{10}{table.caption.11}
-\contentsline {table}{\numberline {3}{\ignorespaces Laasonen - effect of time step increasing \relax }}{11}{table.caption.14}
+\contentsline {table}{\numberline {1}{\ignorespaces Errors for different serial schemes at $t = 0,5h$; $\Delta x=0,5$; $\Delta t=0,1$\relax }}{11}{table.caption.10}
+\contentsline {table}{\numberline {2}{\ignorespaces Errors for different parallelized schemes at $t = 0,5h$; $\Delta x=0,005$; $\Delta t=0,001$\relax }}{12}{table.caption.12}

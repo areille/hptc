@@ -202,8 +202,8 @@
     
             \subsection{Implicit schemes}
     
-                    For both implicit schemes, the vector solution is given by a matrix equation. A $LU$
-                    factorization is used once, before a for-loop, to resolve the system for each space step.
+                    For both implicit schemes, the vector solution is given by a matrix equation. 
+                    Thomas algorithm is used to resolve the system for each space step.
     
                     \subsubsection{Laasonen}
     
@@ -248,8 +248,118 @@
                     In serial, we apply Thomas algorithm for each space step, at the reduced vector, and add the $n+1$ vector to our 
                     result matrix. The new right term vector is the one found with the Thomas algorithm.\\
                     There was several ways to parallelize this study. The one I chose is to
-                    parallelize Thomas algorithm.
-     
+                    parallelize Thomas algorithm. The algorithm I used is described in \cite{thomasalg1}
+                    and in \cite{thomasalg2}. The main idea is to make a recursive procedure with a LU decomposition.
+                    We must note that this algorithm will work with a matrix with differents tridiagonal values.
+
+                    \begin{equation}
+                        \label{eq:laaslu}
+                        \begin{bmatrix}
+                            a_{1}  & c_{1}  & 0      & \cdots & 0 \\
+                            b_{2}  & a_{2}  & c_{2}  & \ddots & \vdots \\
+                            0      & b_{3}  & \ddots & \ddots & 0 \\
+                            \vdots & \ddots & \ddots & a_{N-1}& c_{N-1}\\
+                            0      & \cdots & 0      & b_{N}  & a_{N}
+                        \end{bmatrix}
+                        =
+                        \begin{bmatrix}
+                            1      &        &        &        &  \\
+                             l_{2} & 1      &        &   0    &  \\
+                                   &  l_{3} & \ddots &        & \\
+                                   & 0      & \ddots & 1      & \\
+                                   &        &        & l_{N}  & 1
+                        \end{bmatrix}
+                        \begin{bmatrix}
+                            d_{1}  &  u_{1} &        &        &  \\
+                                   & d_{2}  & u_{2}  &  0     &  \\
+                                   &        & d_{3}  & u_{3} & \\
+                                   & 0      &        & \ddots  & \ddots\\
+                                   &        &        &        & d_{N}
+                        \end{bmatrix}
+                    \end{equation}
+                    Then we have the relations between coefficients :
+                    \begin{equation}
+                        a_{1} = d_{1}
+                    \end{equation}
+                    \begin{equation}
+                        \label{eq:cu}
+                        c_{j} = u_{k}
+                    \end{equation}
+                    \begin{equation}
+                        \label{eq:adlu}
+                        a_{k} = d_{k} + l_{k}u_{k-1}
+                    \end{equation}
+                    \begin{equation}
+                        \label{eq:bld}
+                        b_{k} = l_{k}d_{k-1}
+                    \end{equation}
+                    where $j = 1,..., N$ and $k=2,...,N$.
+                    By putting \ref{eq:cu} and \ref{eq:bld} into \ref{eq:adlu}, we have the recursive
+                    relationship to find $d_{j}$:
+                    \begin{equation}
+                        d_{j} = \frac{a_{j}d_{j-1}-b_{j}c_{j-1}}{d_{j-1}}
+                    \end{equation}
+                    Then we create 2x2 matrices in order to process the parallelisation recursively (for $j=1,...,N$):
+                    \begin{equation}
+                        R_{0}=
+                        \begin{bmatrix}
+                            a_{0} & 0 \\
+                            1     & 0
+                        \end{bmatrix}
+                    \end{equation}
+                    and
+                    \begin{equation}
+                        R_{j}=
+                        \begin{bmatrix}
+                            a_{j} & -b_{j}c_{j-1} \\
+                            1     & 0
+                        \end{bmatrix}
+                    \end{equation}
+                    and by setting $S_{j}=R_{j}R_{j-1}...R_{0}$, we have
+                    \begin{equation}
+                        d_{j}=\frac
+                        {
+                            \begin{pmatrix}
+                                1\\
+                                0
+                            \end{pmatrix}^{t}
+                            S_{j}
+                            \begin{pmatrix}
+                                1\\
+                                1
+                            \end{pmatrix}
+                        }
+                        {
+                            \begin{pmatrix}
+                                0\\
+                                1
+                            \end{pmatrix}^{t}
+                            S_{j}
+                            \begin{pmatrix}
+                                1\\
+                                1
+                            \end{pmatrix}
+                        }
+                    \end{equation} 
+
+                    The algorithm is the following:
+                    \begin{enumerate}
+                        \item On each processor, matrix $R_{k}$ is created. $k$ is the number of rows
+                        which have to be treated by the process.
+                        \item On each processor, matrix $S_{j}$ is created.
+                        \item Calculate local $d_{k}$.
+                        \item Send local $d_{k}$ to next processor.
+                        \item Each process calculate the local $l_{k}$
+                        \item Distribute $d_{j}$ and $l_{j}$ values on all processors.
+                        \item On each processor, a local forward and backward substitution are performed
+                        to obtain the solution
+                    \end{enumerate}
+
+                    This algorithm is performed on each time step, and the found value is inserted in the 
+                    result matrix. Previous time vector is used for actual time space.
+
+
+
                     \subsubsection{Crank-Nicholson}
                         We have :
                         \begin{equation}
@@ -293,8 +403,8 @@
                             \end{bmatrix}_{n}
                         \]
                         with $$C = \frac{D\Delta t}{\Delta x ^2}  $$ 
-                        The method is the same as Laasonen scheme, except that the left term vector found with the $LU$ solve
-                        algorithm is multiplied by the right term matrix before the next space step.
+                        The method and the algorithm used are the same as Laasonen scheme, except that the vector which is found with Thomas algorithm
+                        is multiplied by the right-term matrix before the next time step.
     
                 \subsection{Analytical solution}
                     The analytical solution of the problem considered will be used to compare our results and to calculate
@@ -308,74 +418,123 @@
         % Results
         \newpage
         \section{Results}
-            \subsection{Schemes study}
-                Note that results from Richardson scheme are not displayed on the following plots, due to its unstability \cite{rich}: 
-            the incorrect values polluted our charts.
-            \begin{figure}[H]
-                % \includegraphics[width=\textwidth]{t01.png}
-                \caption{Results with differents schemes at t = 0,1h}
-            \end{figure}
-            We can see that except for the Richardson scheme, the results are quite the same. The errors had been calculated 
-            to evaluate the accuracy of each method.
-            \begin{table}[H]
-                \centering
-                \caption{Errors for different schemes at t = 0,1h}
-                \begin{tabular}{|c|c|c|c|l}
-                \cline{1-4}
-                Errors & Dufort-Frankel & Laasonen & Crank-Nicholson &  \\ \cline{1-4}
-                1-norm & 0,56\%         & 1,72\%   & 1,26\%          &  \\ \cline{1-4}
-                \end{tabular}
-            \end{table}
-            We observe that Dufort-Frankel method is the most accurate, 
-            followed by the Crank-Nicholson method then by the Laasonen method. Let see the evolution of the error
-            while we advance in time. (see appendix for plots)
+            \subsection{Step size effect}
+
+                We must note that due to the step sizes, first calculations could not be done in parallel.
+                \begin{figure}[H]
+                    \includegraphics[width=\textwidth]{step_size_1.png}
+                    \caption{Results with differents serial schemes at $t = 0,5h$; $\Delta x=0,5$; $\Delta t=0,1$}
+                \end{figure}
+
+                We can see quite a big difference between the analytical solution and the other schemes. The errors had been calculated 
+                to evaluate the accuracy of each method.
+
+                \begin{table}[H]
+                    \centering
+                    \caption{Errors for different serial schemes at $t = 0,5h$; $\Delta x=0,5$; $\Delta t=0,1$}
+                    \begin{tabular}{|c|c|c|l}
+                    \cline{1-3}
+                    FTCS     & Laasonen & Crank-Nicholson &  \\ \cline{1-3}
+                    3,04\%   & 2,46\%   & 2,21\%          &  \\ \cline{1-3}
+                    \end{tabular}
+                    
+                \end{table}
+
+                We observe that for these step sizes, at t = 0,5h, Crank-Nicholson method is the 
+                most accurate, and Forward Time Central Space is the less accurate. Let see the 
+                differences when we decrease the step sizes.
+
+                \begin{figure}[H]
+                    \includegraphics[width=\textwidth]{step_size_2.png}
+                    \caption{Results with differents parallelized schemes at $t = 0,5h$; $\Delta x=0,005$; $\Delta t=0,001$}
+                \end{figure}
+
+                With these time and space steps, the stability criterion for FCTS method was not 
+                verified. The values are not displayed because of their nlack of interest.
+                We can see a very small difference between the analytical solution and the other schemes. The errors had been calculated 
+                to evaluate the accuracy of each method.
+
+                \begin{table}[H]
+                    \centering
+                    \caption{Errors for different parallelized schemes at $t = 0,5h$; $\Delta x=0,005$; $\Delta t=0,001$}
+                    \begin{tabular}{|l|c|c|}
+                        \hline
+                                 & \multicolumn{1}{l|}{Laasonen} & \multicolumn{1}{l|}{Crank-Nicholson} \\ \hline
+                        Serial   & 0,01\%                        & 0,04\%                               \\ \hline
+                        Parallel & 0,10\%                        & 0,15\%                               \\ \hline
+                    \end{tabular}
+                \end{table}
+
+                We observe that by reducing a lot the step size, accuracy of the results is very good. We also observe that serial
+                results are quite the same as the analytical results. We will discuss this later.
+            % \subsection{Schemes study}
+            %     Note that results from Richardson scheme are not displayed on the following plots, due to its unstability \cite{rich}: 
+            % the incorrect values polluted our charts.
+            % \begin{figure}[H]
+            %     % \includegraphics[width=\textwidth]{t01.png}
+            %     \caption{Results with differents schemes at t = 0,1h}
+            % \end{figure}
+            % We can see that except for the Richardson scheme, the results are quite the same. The errors had been calculated 
+            % to evaluate the accuracy of each method.
+            % \begin{table}[H]
+            %     \centering
+            %     \caption{Errors for different schemes at t = 0,1h}
+            %     \begin{tabular}{|c|c|c|c|l}
+            %     \cline{1-4}
+            %     Errors & Dufort-Frankel & Laasonen & Crank-Nicholson &  \\ \cline{1-4}
+            %     1-norm & 0,56\%         & 1,72\%   & 1,26\%          &  \\ \cline{1-4}
+            %     \end{tabular}
+            % \end{table}
+            % We observe that Dufort-Frankel method is the most accurate, 
+            % followed by the Crank-Nicholson method then by the Laasonen method. Let see the evolution of the error
+            % while we advance in time. (see appendix for plots)
             
-            \begin{table}[H]
-                \centering
-                \caption{Errors for different schemes at different times}
-                \begin{tabular}{|c|c|c|c|}
-                \hline
-                Errors & Dufort frankel & Laasonen & Crank-Nicholson \\ \hline
-                t=0,2h & 0,37\%         & 1,05\%   & 0,80\%          \\ \hline
-                t=0,3h & 0,27\%         & 0,77\%   & 0,60\%          \\ \hline
-                t=0,4h & 0,22\%         & 0,64\%   & 0,49\%          \\ \hline
-                t=0,5h & 0,18\%         & 0,55\%   & 0,42\%          \\ \hline
-                \end{tabular}
-            \end{table}
+            % \begin{table}[H]
+            %     \centering
+            %     \caption{Errors for different schemes at different times}
+            %     \begin{tabular}{|c|c|c|c|}
+            %     \hline
+            %     Errors & Dufort frankel & Laasonen & Crank-Nicholson \\ \hline
+            %     t=0,2h & 0,37\%         & 1,05\%   & 0,80\%          \\ \hline
+            %     t=0,3h & 0,27\%         & 0,77\%   & 0,60\%          \\ \hline
+            %     t=0,4h & 0,22\%         & 0,64\%   & 0,49\%          \\ \hline
+            %     t=0,5h & 0,18\%         & 0,55\%   & 0,42\%          \\ \hline
+            %     \end{tabular}
+            % \end{table}
     
-            We observe that the error is globally decreasing as time increase. The most accurate method appears to 
-            be the Dufort-Frankel method, then the Crank-Nicholson method, then the Laasonen method.
+            % We observe that the error is globally decreasing as time increase. The most accurate method appears to 
+            % be the Dufort-Frankel method, then the Crank-Nicholson method, then the Laasonen method.
     
-            \subsection{Laasonen method : effect of the step time}
-            \begin{figure}[H]
-                % \includegraphics[width=\textwidth]{analytical.png}
-                \caption{Analytical results at different times}
-            \end{figure}
-            \begin{figure}[H]
-                % \includegraphics[width=\textwidth]{las-1.png}
-                \caption{Laasonen scheme with $\Delta t$ = 0,01}
-            \end{figure}
+            % \subsection{Laasonen method : effect of the step time}
+            % \begin{figure}[H]
+            %     % \includegraphics[width=\textwidth]{analytical.png}
+            %     \caption{Analytical results at different times}
+            % \end{figure}
+            % \begin{figure}[H]
+            %     % \includegraphics[width=\textwidth]{las-1.png}
+            %     \caption{Laasonen scheme with $\Delta t$ = 0,01}
+            % \end{figure}
             
-            We can see that the shape of the results is more accurate as $\Delta t$ is little.
-            It may be assumed that increasing $\Delta t$ gives less accurate results.
-            Let's calculate the error between these values and the analytical values. (See appendix for plots)
+            % We can see that the shape of the results is more accurate as $\Delta t$ is little.
+            % It may be assumed that increasing $\Delta t$ gives less accurate results.
+            % Let's calculate the error between these values and the analytical values. (See appendix for plots)
     
-            \begin{table}[H]
-                \centering
-                \caption{Laasonen - effect of time step increasing }
-                \label{table:laas}
-                \begin{tabular}{|l|l|l|l|l|l|}
-                    \hline
-                    Errors    & t = 0,1h & t = 0,2h  & t = 0,3h  & t = 0,4h & t = 0,5h \\ \hline
-                    $\Delta$t=0,01  & 1,72\%   & 1,05\%  & 2,83\%  & 0,64\% & 0,55\% \\ \hline
-                    $\Delta$t=0,025 & 4,53\%   & 2,76\%  & 0,81\%  & 1,69\% & 1,45\% \\ \hline
-                    $\Delta$t=0,05  & 9,75\%   & 5,84\%  & 4,95\%  & 3,50\% & 2,98\% \\ \hline
-                    $\Delta$t=0,1   & 53,96\%  & 12,80\% & 16,30\% & 7,35\% & 6,19\% \\ \hline
-                \end{tabular}
-            \end{table}
+            % \begin{table}[H]
+            %     \centering
+            %     \caption{Laasonen - effect of time step increasing }
+            %     \label{table:laas}
+            %     \begin{tabular}{|l|l|l|l|l|l|}
+            %         \hline
+            %         Errors    & t = 0,1h & t = 0,2h  & t = 0,3h  & t = 0,4h & t = 0,5h \\ \hline
+            %         $\Delta$t=0,01  & 1,72\%   & 1,05\%  & 2,83\%  & 0,64\% & 0,55\% \\ \hline
+            %         $\Delta$t=0,025 & 4,53\%   & 2,76\%  & 0,81\%  & 1,69\% & 1,45\% \\ \hline
+            %         $\Delta$t=0,05  & 9,75\%   & 5,84\%  & 4,95\%  & 3,50\% & 2,98\% \\ \hline
+            %         $\Delta$t=0,1   & 53,96\%  & 12,80\% & 16,30\% & 7,35\% & 6,19\% \\ \hline
+            %     \end{tabular}
+            % \end{table}
     
-            We observe that as time grows, the error decrease. Also, as time step grows, the error is increasing.
-            Previous asumption is correct, according to the error calculation.
+            % We observe that as time grows, the error decrease. Also, as time step grows, the error is increasing.
+            % Previous asumption is correct, according to the error calculation.
         % Discussion
         \newpage
         \section{Discussion}
@@ -513,6 +672,12 @@
             \bibitem{laas} 
             D. Britz \& Jorg Strutwolf, \textit{Digital Simulation in Electrochemistry}.
             Springer, 2006
+
+            \bibitem{thomasalg1}
+            George Karniadakis \textit{Parallel Scientific Computing in C++ and MPI}. 1994.
+
+            \bibitem{thomasalg2}
+            E.F. Van de Velde. \textit{Concurrent Scientific Computing}. 1994.
     
             
             % \bibitem{einstein} 

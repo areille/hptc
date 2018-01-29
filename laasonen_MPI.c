@@ -50,14 +50,16 @@ void thomasAlg_parallel(int myrank, int npes, int N, double *b, double *a, doubl
     double *l = (double *)malloc(N * sizeof(double));
     double *d = (double *)malloc(N * sizeof(double));
     double *y = (double *)malloc(N * sizeof(double));
+    // double l, d;
     for (i = 0; i < N; i++)
         l[i] = d[i] = y[i] = 0.0;
+    // l = d = 0.0;
+    // Do it with malloc
     S[0][0] = S[1][1] = 1.0;
     S[1][0] = S[0][1] = 0.0;
     newspace = (int)floor(N / npes);
     p_offset = myrank * newspace;
 
-    // Form local products of R_k matrices
     if (myrank == 0)
     {
         s1tmp = a[p_offset] * S[0][0];
@@ -87,7 +89,7 @@ void thomasAlg_parallel(int myrank, int npes, int N, double *b, double *a, doubl
             S[0][1] = s2tmp;
         }
     }
-    // Full-recursive doubling algorithm for distribution
+
     for (i = 0; i <= log2(npes); i++)
     {
         if (myrank + pow(2, i) < npes)
@@ -103,7 +105,7 @@ void thomasAlg_parallel(int myrank, int npes, int N, double *b, double *a, doubl
             S[1][0] = s1tmp;
         }
     }
-    //Calculate last d_k first so that it can be distributed, //and then do the distribution.
+
     d[p_offset + newspace - 1] = (S[0][0] + S[0][1]) / (S[1][0] + S[1][1]);
     if (myrank == 0)
     {
@@ -117,7 +119,7 @@ void thomasAlg_parallel(int myrank, int npes, int N, double *b, double *a, doubl
             MPI_Send(&d[p_offset + newspace - 1], 1, MPI_DOUBLE,
                      myrank + 1, 0, MPI_COMM_WORLD);
     }
-    // Compute in parallel the local values of d_k and l_k
+
     if (myrank == 0)
     {
         l[0] = 0;
@@ -142,10 +144,8 @@ void thomasAlg_parallel(int myrank, int npes, int N, double *b, double *a, doubl
         l[p_offset + newspace - 1] = b[p_offset + newspace - 2] /
                                      d[p_offset + newspace - 2];
     }
-    /***************************************************************/
     if (myrank > 0)
         d[p_offset - 1] = 0;
-    // Distribute d_k and l_k to all processes
     double *tmp = (double *)malloc(N * sizeof(double));
     for (i = 0; i < N; i++)
         tmp[i] = d[i];
@@ -156,13 +156,14 @@ void thomasAlg_parallel(int myrank, int npes, int N, double *b, double *a, doubl
     free(tmp);
     if (myrank == 0)
     {
-        /* Forward Substitution [L][y] = [q] */ y[0] = q[0];
+        y[0] = q[0];
         for (i = 1; i < N; i++)
             y[i] = q[i] - l[i] * y[i - 1];
-        /* Backward Substitution [U][x] = [y] */ x[N - 1] = y[N - 1] / d[N - 1];
+        x[N - 1] = y[N - 1] / d[N - 1];
         for (i = N - 2; i >= 0; i--)
             x[i] = (y[i] - c[i] * x[i + 1]) / d[i];
     }
+
     free(l);
     free(y);
     free(d);
@@ -172,11 +173,15 @@ int main(int argc, char *argv[])
 {
     // MPI THINGS
     int npes, myrank;
+    double starttime, finaltime, precision;
     MPI_Status status;
     MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &npes);
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
     MPI_Request request;
+
+    precision = MPI_Wtick();
+    starttime = MPI_Wtime();
 
     // Initialization
     double D = 0.1;
@@ -189,7 +194,7 @@ int main(int argc, char *argv[])
     int Tint = 100;
     int tag;
     int ntime = T / dt;
-    int nspace = L / dx;
+    int nspace = L / dx + 1;
     int root;
     if (myrank == 0)
         root = 1;
@@ -276,11 +281,14 @@ int main(int argc, char *argv[])
             printf("Results matrix : \n\n");
             for (int i = 0; i < ntime; i++)
             {
-                for (int j = 0; j < nspace; j++)
+                if (i == ntime / 2)
                 {
-                    printf("%3.2f ", results[i][j]);
+                    for (int j = 0; j < nspace; j++)
+                    {
+                        printf("%3.2f, ", results[i][j]);
+                    }
                 }
-                printf("\n");
+                // printf("\n");
             }
         }
     }
@@ -289,67 +297,75 @@ int main(int argc, char *argv[])
         // if (nspace % npes == 0)
         // {
 
-            double a[nspace - 2];
-            double b[nspace - 2];
-            double c[nspace - 2];
-            double c_copy[nspace - 2];
-            double x[nspace - 2];
-            double d[nspace];
-            double d_reduced[nspace - 2];
-            int offset;
-            // Creating matrix C and vectors.
+        double a[nspace - 2];
+        double b[nspace - 2];
+        double c[nspace - 2];
+        double c_copy[nspace - 2];
+        double x[nspace - 2];
+        double d[nspace];
+        double d_reduced[nspace - 2];
+        int offset;
+        // Creating matrix C and vectors.
+        for (int i = 0; i < nspace - 2; i++)
+        {
+            a[i] = -r;
+            c[i] = -r;
+            b[i] = 1 + 2 * r;
+            x[i] = 0.0;
+        }
+
+        for (int n = 1; n < ntime; n++)
+        {
+            // COPY THE PREVIOUS T° LINE IN d
+            for (int i = 0; i < nspace; i++)
+                d[i] = results[n - 1][i];
+            // CHANGES THE BOUNDARIES VALUES
+            d[1] += r * d[0];
+            d[nspace - 2] += r * d[nspace - 1];
             for (int i = 0; i < nspace - 2; i++)
             {
-                a[i] = -r;
-                c[i] = -r;
-                b[i] = 1 + 2 * r;
-                x[i] = 0.0;
+                // COPY THE REDUCED VECTOR IN d_reduced
+                d_reduced[i] = d[i + 1];
+                // COPY GOOD VALUE OF C
+                c_copy[i] = c[i];
             }
+            // RESOLVES a[i]x[i-1]+b[i]x[i]+c[i]x[i+1] = d[i] // WARNING : C AND X ARE MODIFIED
+            thomasAlg_parallel(myrank, npes, nspace - 2, a, b, c_copy, x, d_reduced);
 
-            for (int n = 1; n < ntime; n++)
+            // COPY THE RESULT x INTO RESULTS MATRIX
+            for (int i = 0; i < nspace - 2; i++)
+                results[n][i + 1] = x[i];
+            results[n][0] = Text;
+            results[n][nspace - 1] = Text;
+        }
+        if (root)
+        {
+            printf("\n\n");
+            printf("Results matrix ahem : \n\n");
+            for (int i = 0; i < ntime; i++)
             {
-                // COPY THE PREVIOUS T° LINE IN d
-                for (int i = 0; i < nspace; i++)
-                    d[i] = results[n - 1][i];
-                // CHANGES THE BOUNDARIES VALUES
-                d[1] += r * d[0];
-                d[nspace - 2] += r * d[nspace - 1];
-                for (int i = 0; i < nspace - 2; i++)
-                {
-                    // COPY THE REDUCED VECTOR IN d_reduced
-                    d_reduced[i] = d[i + 1];
-                    // COPY GOOD VALUE OF C
-                    c_copy[i] = c[i];
-                }
-                // RESOLVES a[i]x[i-1]+b[i]x[i]+c[i]x[i+1] = d[i] // WARNING : C AND X ARE MODIFIED
-                thomasAlg_parallel(myrank, npes, nspace - 2, a, b, c_copy, x, d_reduced);
-
-                // COPY THE RESULT x INTO RESULTS MATRIX
-                for (int i = 0; i < nspace - 2; i++)
-                    results[n][i + 1] = x[i];
-                results[n][0] = Text;
-                results[n][nspace - 1] = Text;
-            }
-            if (root)
-            {
-                printf("\n\n");
-                printf("Results matrix ahem : \n\n");
-                for (int i = 0; i < ntime; i++)
+                if (i == ntime / 2)
                 {
                     for (int j = 0; j < nspace; j++)
                     {
                         printf("%3.2f ", results[i][j]);
                     }
-                    printf("\n");
                 }
+                // printf("\n");
             }
         }
-
-        // if (root)
-        // {
-        //     printf("\n");
-        //     printf("-----TODO------\n");
-        // }
+    }
+    finaltime = MPI_Wtime();
+    if (root)
+    {
+        printf("\n\n");
+        printf("The execution time was %fs with a precision of %f.\n", finaltime - starttime, precision);
+    }
+    // if (root)
+    // {
+    //     printf("\n");
+    //     printf("-----TODO------\n");
+    // }
     // }
     MPI_Finalize();
 }

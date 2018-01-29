@@ -9,15 +9,19 @@ int main(int argc, char *argv[])
 {
     // MPI things
     int npes, myrank;
+    double starttime, finaltime, precision;
     MPI_Status status;
     MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &npes);
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
+    precision = MPI_Wtick();
+    starttime = MPI_Wtime();
+
     // Initialization
     double D = 0.1;
-    double dx = 0.5;
-    double dt = 0.1;
+    double dx = 0.005;
+    double dt = 0.001;
     double L = 1.0;
     double T = 1.0;
     double r = D * dt / pow(dx, 2);
@@ -51,7 +55,7 @@ int main(int argc, char *argv[])
             printf("Exit : r >= 0.5 \n");
             printf("Try to change ∆x and ∆t\n");
         }
-        exit(-1);
+        // exit(-1);
     }
     else
     {
@@ -224,5 +228,13 @@ int main(int argc, char *argv[])
             printf("\n");
         }
     }
+    finaltime = MPI_Wtime();
+    if(root)
+    {
+        printf("\n\n");
+        printf("The execution time was %fs with a precision of %f.\n", finaltime-starttime, precision);
+
+    }
+
     MPI_Finalize();
 }

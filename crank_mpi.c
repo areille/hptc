@@ -189,7 +189,7 @@ int main(int argc, char *argv[])
     int Tint = 100;
     int tag;
     int ntime = T / dt;
-    int nspace = L / dx;
+    int nspace = L / dx + 1;
     int root;
     if (myrank == 0)
         root = 1;
@@ -297,7 +297,7 @@ int main(int argc, char *argv[])
                 {
                     for (int j = 0; j < nspace; j++)
                     {
-                        printf("%3.2f ", results[i][j]);
+                        printf("%3.2f, ", results[i][j]);
                     }
                 }
                 // printf("\n");
