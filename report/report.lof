@@ -1,6 +1,6 @@
 \contentsline {figure}{\numberline {1}{\ignorespaces Stencil for FTCS explicit scheme\relax }}{6}{figure.caption.6}
 \contentsline {figure}{\numberline {2}{\ignorespaces Separation of values per processors at t=0h\relax }}{6}{figure.caption.7}
 \contentsline {figure}{\numberline {3}{\ignorespaces Exchanges between processors at each time step\relax }}{7}{figure.caption.8}
-\contentsline {figure}{\numberline {4}{\ignorespaces Results with differents schemes at t = 0,1h\relax }}{9}{figure.caption.9}
-\contentsline {figure}{\numberline {5}{\ignorespaces Analytical results at different times\relax }}{9}{figure.caption.12}
-\contentsline {figure}{\numberline {6}{\ignorespaces Laasonen scheme with $\Delta t$ = 0,01\relax }}{9}{figure.caption.13}
+\contentsline {figure}{\numberline {4}{\ignorespaces Results with differents schemes at t = 0,1h\relax }}{10}{figure.caption.9}
+\contentsline {figure}{\numberline {5}{\ignorespaces Analytical results at different times\relax }}{10}{figure.caption.12}
+\contentsline {figure}{\numberline {6}{\ignorespaces Laasonen scheme with $\Delta t$ = 0,01\relax }}{10}{figure.caption.13}

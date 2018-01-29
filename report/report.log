@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017) (preloaded format=pdflatex 2017.9.28)  27 JAN 2018 17:01
+This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017) (preloaded format=pdflatex 2017.9.28)  28 JAN 2018 16:29
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -406,7 +406,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 111--114
 
  []
 
-<ressources/stencil_explicit.png, id=188, 2007.5pt x 1227.58624pt>
+<ressources/stencil_explicit.png, id=181, 2007.5pt x 1227.58624pt>
 File: ressources/stencil_explicit.png Graphic file (type png)
 
 <use ressources/stencil_explicit.png>
@@ -414,14 +414,14 @@ Package pdftex.def Info: ressources/stencil_explicit.png used on input line 159
 .
 (pdftex.def)             Requested size: 113.81102pt x 69.58727pt.
  [5]
-<ressources/separation.png, id=202, 706.64pt x 89.33376pt>
+<ressources/separation.png, id=195, 706.64pt x 89.33376pt>
 File: ressources/separation.png Graphic file (type png)
 
 <use ressources/separation.png>
 Package pdftex.def Info: ressources/separation.png used on input line 177.
 (pdftex.def)             Requested size: 345.0pt x 43.61578pt.
 
-<ressources/parallel_explicit.png, id=203, 657.45625pt x 186.6975pt>
+<ressources/parallel_explicit.png, id=196, 657.45625pt x 186.6975pt>
 File: ressources/parallel_explicit.png Graphic file (type png)
 
 <use ressources/parallel_explicit.png>
@@ -430,38 +430,38 @@ Package pdftex.def Info: ressources/parallel_explicit.png used on input line 19
 (pdftex.def)             Requested size: 345.0pt x 97.96922pt.
  [6 <./ressources/stencil_explicit.png> <./ressources/separation.png>] [7 <./re
 ssources/parallel_explicit.png>] [8]
-[9] [10]
-Underfull \hbox (badness 10000) in paragraph at lines 381--396
+[9] [10] [11]
+Underfull \hbox (badness 10000) in paragraph at lines 383--398
 
  []
 
 
-LaTeX Warning: Reference `eq:rich' on page 11 undefined on input line 416.
+LaTeX Warning: Reference `eq:rich' on page 12 undefined on input line 418.
 
-[11]
+[12]
 
-LaTeX Warning: Reference `eq:df' on page 12 undefined on input line 420.
+LaTeX Warning: Reference `eq:df' on page 13 undefined on input line 422.
 
-[12] [13]
-Overfull \hbox (4.33281pt too wide) in paragraph at lines 468--472
+[13] [14]
+Overfull \hbox (4.33281pt too wide) in paragraph at lines 470--474
 \OT1/cmr/m/n/10 For a one di-men-sional prob-lem, PDE can be re-solved us-ing d
 is-creti-sa-tion schemes.
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 478--484
+Underfull \hbox (badness 10000) in paragraph at lines 480--486
 
  []
 
-[14]
-Overfull \hbox (4.08049pt too wide) in paragraph at lines 502--505
+[15]
+Overfull \hbox (4.08049pt too wide) in paragraph at lines 504--507
 \OT1/cmtt/m/n/10 https://www.iist.ac.in/sites/default/files/people/parabolic.pd
 f\OT1/cmr/m/n/10 . 
  []
 
 /Users/augustinreille/Documents/WORKSPACE/CRANFIELD/HPTC/Assignment/report/repo
-rt.tex:508: Misplaced alignment tab character &.
-l.508             Crank, J. &
+rt.tex:510: Misplaced alignment tab character &.
+l.510             Crank, J. &
                               Nicolson, P. Adv Comput Math (1996) 6: 207.
 I can't figure out why you would want to use a tab mark
 here. If you just want an ampersand, the remedy is
@@ -470,74 +470,53 @@ up above has ended a previous alignment prematurely,
 you're probably due for more error messages, and you
 might try typing `S' now just to see what is salvageable.
 
-[15]
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 568.
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 568.
+[16]
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 570.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 570.
  (./report.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 568.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 568.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 570.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 570.
+Package rerunfilecheck Info: File `report.out' has not changed.
+(rerunfilecheck)             Checksum: 5845679CD0E5FEC6470668BE50BD45DE;1643.
 
-
-Package rerunfilecheck Warning: File `report.out' has changed.
-(rerunfilecheck)                Rerun to get outlines right
-(rerunfilecheck)                or use package `bookmark'.
-
-Package rerunfilecheck Info: Checksums for `report.out':
-(rerunfilecheck)             Before: 9F3E99C7A2EEA25C1229C463AECBE68E;1715
-(rerunfilecheck)             After:  5845679CD0E5FEC6470668BE50BD45DE;1643.
 
 LaTeX Warning: There were undefined references.
 
 
 LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
 
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 568.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 570.
  ) 
 Here is how much of TeX's memory you used:
- 8401 strings out of 492995
- 125941 string characters out of 6132704
+ 8396 strings out of 492995
+ 125852 string characters out of 6132704
  221711 words of memory out of 5000000
- 11797 multiletter control sequences out of 15000+600000
+ 11796 multiletter control sequences out of 15000+600000
  10144 words of font info for 37 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  42i,9n,40p,371b,355s stack positions out of 5000i,500n,10000p,200000b,80000s
-pdfTeX warning (dest): name{table.caption.15} has been referenced but does no
-t exist, replaced by a fixed one
-
-pdfTeX warning (dest): name{table.caption.12} has been referenced but does not 
-exist, replaced by a fixed one
-
-pdfTeX warning (dest): name{figure.caption.14} has been referenced but does not
- exist, replaced by a fixed one
-
-pdfTeX warning (dest): name{figure.caption.10} has been referenced but does not
- exist, replaced by a fixed one
-
-pdfTeX warning (dest): name{subsection.2.4} has been referenced but does not ex
-ist, replaced by a fixed one
-
-</usr/local/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb><
-/usr/local/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></
-usr/local/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx9.pfb></us
-r/local/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr
-/local/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/
-local/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi5.pfb></usr/lo
-cal/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/loca
-l/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/
-texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/local/te
-xlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/local/texl
-ive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmr5.pfb></usr/local/texlive
-/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/local/texlive/20
-17/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/local/texlive/2017/
-texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2017/t
-exmf-dist/fonts/type1/public/amsfonts/cm/cmsy5.pfb></usr/local/texlive/2017/tex
-mf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texlive/2017/texmf
--dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/texlive/2017/texmf-
-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb>
-Output written on report.pdf (15 pages, 279715 bytes).
+</usr/local/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb
+></usr/local/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb>
+</usr/local/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx9.pfb></
+usr/local/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></u
+sr/local/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></us
+r/local/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi5.pfb></usr/
+local/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/lo
+cal/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/loca
+l/texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/local/
+texlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/local/te
+xlive/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmr5.pfb></usr/local/texli
+ve/2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/local/texlive/
+2017/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/local/texlive/201
+7/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2017
+/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy5.pfb></usr/local/texlive/2017/t
+exmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texlive/2017/tex
+mf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/texlive/2017/texm
+f-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb>
+Output written on report.pdf (16 pages, 279945 bytes).
 PDF statistics:
- 357 PDF objects out of 1000 (max. 8388607)
- 312 compressed objects within 4 object streams
- 77 named destinations out of 1000 (max. 500000)
- 224 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 351 PDF objects out of 1000 (max. 8388607)
+ 305 compressed objects within 4 object streams
+ 73 named destinations out of 1000 (max. 500000)
+ 216 words of extra memory for PDF output out of 10000 (max. 10000000)
 

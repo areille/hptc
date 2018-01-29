@@ -180,8 +180,8 @@ int main(int argc, char *argv[])
 
     // Initialization
     double D = 0.1;
-    double dx = 0.04;
-    double dt = 0.01;
+    double dx = 0.005;
+    double dt = 0.001;
     double L = 1.0;
     double T = 1.0;
     double r = D * dt / pow(dx, 2);
@@ -189,7 +189,7 @@ int main(int argc, char *argv[])
     int Tint = 100;
     int tag;
     int ntime = T / dt;
-    int nspace = L / dx + 1;
+    int nspace = L / dx;
     int root;
     if (myrank == 0)
         root = 1;

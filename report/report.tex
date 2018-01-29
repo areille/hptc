@@ -245,8 +245,10 @@
                     In this scheme we must be aware that the right-term vector is actually bigger than
                     the other, of 2 values, which corresponds to the exterior temperatures, which stays
                     the same all the time.\\
-                    We apply the $LU$ solve algorithm for each space step, at the reduced vector, and add the $n+1$ vector to our 
-                    result matrix. The new right term vector is the one found with the $LU$ solve algorithm.
+                    In serial, we apply Thomas algorithm for each space step, at the reduced vector, and add the $n+1$ vector to our 
+                    result matrix. The new right term vector is the one found with the Thomas algorithm.\\
+                    There was several ways to parallelize this study. The one I chose is to
+                    parallelize Thomas algorithm.
      
                     \subsubsection{Crank-Nicholson}
                         We have :

@@ -16,8 +16,8 @@ int main(int argc, char *argv[])
 
     // Initialization
     double D = 0.1;
-    double dx = 0.05;
-    double dt = 0.01;
+    double dx = 0.5;
+    double dt = 0.1;
     double L = 1.0;
     double T = 1.0;
     double r = D * dt / pow(dx, 2);
@@ -86,9 +86,8 @@ int main(int argc, char *argv[])
             printf("Too much processors for considered problem.\n");
             exit(-1);
         }
-
     }
-    else if (npes == 1 ||npes == nspace)
+    else if (npes == 1 || npes == nspace)
     {
         if (root)
             for (int n = 1; n < ntime; n++)
@@ -178,7 +177,7 @@ int main(int argc, char *argv[])
                     p_results[n][0] = Text;
                 if (myrank == npes - 1)
                     p_results[n][newspace - 1] = Text;
-                
+
                 // MPI_Gather(p_results[n], newspace, MPI_DOUBLE, results[n], newspace, MPI_DOUBLE, 0, MPI_COMM_WORLD);
             }
             // ALL RESULTS ARE GATHERED ON PROCESSOR 0
@@ -214,10 +213,13 @@ int main(int argc, char *argv[])
         printf("Results matrix : \n\n");
         for (int i = 0; i < ntime; i++)
         {
-            printf("rank : %d, line %d : ", myrank, i + 1);
-            for (int j = 0; j < nspace; j++)
+            // printf("rank : %d, line %d : ", myrank, i + 1);
+            if (i == ntime / 2)
             {
-                printf("%3.2f ", results[i][j]);
+                for (int j = 0; j < nspace; j++)
+                {
+                    printf("%3.2f, ", results[i][j]);
+                }
             }
             printf("\n");
         }
