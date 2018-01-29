@@ -413,6 +413,19 @@
                     \label{eq:analytical}
                     T = T_{ext}+2(T_{int}-T_{ext})\sum_{m=1}^{m=\infty} e^{-D(m\pi / L)^{2}t} \frac{1-(-1)^m}{m\pi} sin(\frac{m\pi x}{L})
                 \end{equation}
+
+                \subsection{Speed-up calculation}
+                    To investigate the performance of our programs, we used MPI functions :
+                    \begin{itemize}
+                        \item MPI\_Wtime : returns an elapsed time on the calling processor.\cite{mpi_doc}
+                        \item MPI\_Wtick : returns the resolution of MPI\_Wtime.\cite{mpi_doc}
+                    \end{itemize}
+                    The actual speed-up is calculated as following:
+                    \begin{equation}
+                        speedup = finaltime - starttime
+                    \end{equation}
+                    where $finaltime$ is a double containing the value of MPI\_Wtime at the end of the program,
+                    and $starttime$ is a double containing the value of MPI\_Wtime at the beginning of the program.
     
     
         % Results
@@ -467,6 +480,14 @@
 
                 We observe that by reducing a lot the step size, accuracy of the results is very good. We also observe that serial
                 results are quite the same as the analytical results. We will discuss this later.
+
+            \subsection{Speed-up investigation}
+                
+            \begin{figure}[H]
+                \includegraphics[width=\textwidth]{time_study.png}
+                \caption{Speed-up results for each method}
+            \end{figure}
+            As we see in Fig. 6, the speed-up time increase as we increase the number of processors.
             % \subsection{Schemes study}
             %     Note that results from Richardson scheme are not displayed on the following plots, due to its unstability \cite{rich}: 
             % the incorrect values polluted our charts.
@@ -678,6 +699,10 @@
 
             \bibitem{thomasalg2}
             E.F. Van de Velde. \textit{Concurrent Scientific Computing}. 1994.
+
+            \bibitem{mpi_doc}
+            Open MPI v2.0.4 documentation.
+            \\\texttt{https://www.open-mpi.org/doc/v2.0/}
     
             
             % \bibitem{einstein} 

@@ -3,3 +3,4 @@
 \contentsline {figure}{\numberline {3}{\ignorespaces Exchanges between processors at each time step\relax }}{7}{figure.caption.8}
 \contentsline {figure}{\numberline {4}{\ignorespaces Results with differents serial schemes at $t = 0,5h$; $\Delta x=0,5$; $\Delta t=0,1$\relax }}{11}{figure.caption.9}
 \contentsline {figure}{\numberline {5}{\ignorespaces Results with differents parallelized schemes at $t = 0,5h$; $\Delta x=0,005$; $\Delta t=0,001$\relax }}{12}{figure.caption.11}
+\contentsline {figure}{\numberline {6}{\ignorespaces Speed-up results for each method\relax }}{13}{figure.caption.13}
