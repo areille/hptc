@@ -24,11 +24,9 @@
         \begin{abstract}
             A one-space dimensional problem is considered, to examine the application
             of distributed memory parallel programming techniques for the numerical 
-            solution of the heat conduction equation.
-            % The Dufort-Frankel, Richardson, Laasonen and Crank-Nicolson schemes are implemented,
-            % considered, and compared to the analytical solution of the one-space problem.
-            % The effect of the time step is investigated for the Laasonen scheme.
-            % \\ An object oriented designed C++ code is implemented to point out results.
+            solution of the heat conduction equation.\\
+            The effect of changing time and space steps are investigated, and so is the runtime
+            between serial and parallel programs using MPI, resolving the same problem.
         \end{abstract}
     
         % Table of contents
@@ -65,17 +63,12 @@
         A PDE (Partial Differential Equation) is an equation which includes derivatives of an unknown function, with at least 2 variables.
         PDEs can describe the behavior of lot of engineering phenomena \cite{pde}, that's why it is important to 
         known how to resolve them computationally. One way to resolve PDEs is to discretize the problem into
-        a mesh. Applying finites differences on some points of the mesh, we can find a function
-        which is more or less the same than the unknown function described by the PDE.
-        \\
-        To find the unknown function, applying differences on a mesh work differently according to the difference chosen, 
-        but also according to the chosen mesh. For a one-dimensional problem, time steps and space steps can impact the accuracy
-        of the result found. Also, the chosen differences affect the result. A discretisation scheme is the way we choose to apply
-        finites differences.
-        \\
-        In this study we are going to see how the accuracy of known schemes are evolving for a one-dimensional problem, and how the 
-        meshing impact the accuracy of those schemes.
-        
+        a mesh. The bigger is the mesh, the more accurate the results are.\\
+        As runtime depends on the study size, a good way to provide a good accuracy for results
+        and keeping a correct runtime is to parallelize the programs and the algorithms used.\\
+        In this study, we will use MPI \cite{mpi_doc}, a well-known communication protocol for programming in parallel, to
+        see how the accuracy and the runtime are evolving between a serial and a parallel implementation
+        of a program resolving a one-dimensional PDE.
         
     
     
@@ -125,26 +118,6 @@
             \]
             This is how the matrix is initialized, according to initial conditions.
 
-            % For most of the used schemes, we need two previous time steps to calculate the current step.
-            % An order one scheme (FTCS) is used to find the second line of the matrix:
-            % \begin{equation}
-            %     T_{i,1} = \frac{\alpha}{2} (T_{i+1,0} + T_{i-1,0}) + (1-\alpha)T_{i,0}
-            % \end{equation}
-            % with $$\alpha = 2\frac{D\delta t}{\delta x^{2}}$$
-            % So we have:
-            % \[
-            %     \begin{blockarray}{cccccc}
-            %     i = 0 & i = 1 & \cdots & n_{space}-1 & n_{space} \\
-            %     \begin{block}{(ccccc)c}
-            %       T_{ext} & T_{int} & \cdots & T_{int} & T_{ext} & j=0 \\
-            %       T_{ext} & T_{i,1} & \cdots & T_{i,1} & T_{ext} & j=1 \\
-            %       \vdots & \vdots & \ddots & \vdots & \vdots & \vdots \\
-            %       T_{ext} & 0 & \cdots & 0 & T_{ext} & n_{time} \\
-            %     \end{block}
-            %     \end{blockarray}
-            % \]
-            % With this trick our matrix is ready to be used and filled up with every scheme.
-    
             \subsection{FTCS simple explicit}
                 
             In order to perform the parallelization, we assume that the number of 
@@ -250,7 +223,8 @@
                     There was several ways to parallelize this study. The one I chose is to
                     parallelize Thomas algorithm. The algorithm I used is described in \cite{thomasalg1}
                     and in \cite{thomasalg2}. The main idea is to make a recursive procedure with a LU decomposition.
-                    We must note that this algorithm will work with a matrix with differents tridiagonal values.
+                    We must note that this algorithm will work with a matrix with differents tridiagonal values, and only for
+                    a number of processors which is a power of two.
 
                     \begin{equation}
                         \label{eq:laaslu}
@@ -358,8 +332,6 @@
                     This algorithm is performed on each time step, and the found value is inserted in the 
                     result matrix. Previous time vector is used for actual time space.
 
-
-
                     \subsubsection{Crank-Nicholson}
                         We have :
                         \begin{equation}
@@ -463,7 +435,7 @@
                 \end{figure}
 
                 With these time and space steps, the stability criterion for FCTS method was not 
-                verified. The values are not displayed because of their nlack of interest.
+                verified. The values are not displayed because of their lack of interest.
                 We can see a very small difference between the analytical solution and the other schemes. The errors had been calculated 
                 to evaluate the accuracy of each method.
 
@@ -487,75 +459,9 @@
                 \includegraphics[width=\textwidth]{time_study.png}
                 \caption{Speed-up results for each method}
             \end{figure}
-            As we see in Fig. 6, the speed-up time increase as we increase the number of processors.
-            % \subsection{Schemes study}
-            %     Note that results from Richardson scheme are not displayed on the following plots, due to its unstability \cite{rich}: 
-            % the incorrect values polluted our charts.
-            % \begin{figure}[H]
-            %     % \includegraphics[width=\textwidth]{t01.png}
-            %     \caption{Results with differents schemes at t = 0,1h}
-            % \end{figure}
-            % We can see that except for the Richardson scheme, the results are quite the same. The errors had been calculated 
-            % to evaluate the accuracy of each method.
-            % \begin{table}[H]
-            %     \centering
-            %     \caption{Errors for different schemes at t = 0,1h}
-            %     \begin{tabular}{|c|c|c|c|l}
-            %     \cline{1-4}
-            %     Errors & Dufort-Frankel & Laasonen & Crank-Nicholson &  \\ \cline{1-4}
-            %     1-norm & 0,56\%         & 1,72\%   & 1,26\%          &  \\ \cline{1-4}
-            %     \end{tabular}
-            % \end{table}
-            % We observe that Dufort-Frankel method is the most accurate, 
-            % followed by the Crank-Nicholson method then by the Laasonen method. Let see the evolution of the error
-            % while we advance in time. (see appendix for plots)
+            As we see in Fig. 6, the speed-up time increase as we increase the number of processors. The use of an external
+            library is not quite usefull in our case.
             
-            % \begin{table}[H]
-            %     \centering
-            %     \caption{Errors for different schemes at different times}
-            %     \begin{tabular}{|c|c|c|c|}
-            %     \hline
-            %     Errors & Dufort frankel & Laasonen & Crank-Nicholson \\ \hline
-            %     t=0,2h & 0,37\%         & 1,05\%   & 0,80\%          \\ \hline
-            %     t=0,3h & 0,27\%         & 0,77\%   & 0,60\%          \\ \hline
-            %     t=0,4h & 0,22\%         & 0,64\%   & 0,49\%          \\ \hline
-            %     t=0,5h & 0,18\%         & 0,55\%   & 0,42\%          \\ \hline
-            %     \end{tabular}
-            % \end{table}
-    
-            % We observe that the error is globally decreasing as time increase. The most accurate method appears to 
-            % be the Dufort-Frankel method, then the Crank-Nicholson method, then the Laasonen method.
-    
-            % \subsection{Laasonen method : effect of the step time}
-            % \begin{figure}[H]
-            %     % \includegraphics[width=\textwidth]{analytical.png}
-            %     \caption{Analytical results at different times}
-            % \end{figure}
-            % \begin{figure}[H]
-            %     % \includegraphics[width=\textwidth]{las-1.png}
-            %     \caption{Laasonen scheme with $\Delta t$ = 0,01}
-            % \end{figure}
-            
-            % We can see that the shape of the results is more accurate as $\Delta t$ is little.
-            % It may be assumed that increasing $\Delta t$ gives less accurate results.
-            % Let's calculate the error between these values and the analytical values. (See appendix for plots)
-    
-            % \begin{table}[H]
-            %     \centering
-            %     \caption{Laasonen - effect of time step increasing }
-            %     \label{table:laas}
-            %     \begin{tabular}{|l|l|l|l|l|l|}
-            %         \hline
-            %         Errors    & t = 0,1h & t = 0,2h  & t = 0,3h  & t = 0,4h & t = 0,5h \\ \hline
-            %         $\Delta$t=0,01  & 1,72\%   & 1,05\%  & 2,83\%  & 0,64\% & 0,55\% \\ \hline
-            %         $\Delta$t=0,025 & 4,53\%   & 2,76\%  & 0,81\%  & 1,69\% & 1,45\% \\ \hline
-            %         $\Delta$t=0,05  & 9,75\%   & 5,84\%  & 4,95\%  & 3,50\% & 2,98\% \\ \hline
-            %         $\Delta$t=0,1   & 53,96\%  & 12,80\% & 16,30\% & 7,35\% & 6,19\% \\ \hline
-            %     \end{tabular}
-            % \end{table}
-    
-            % We observe that as time grows, the error decrease. Also, as time step grows, the error is increasing.
-            % Previous asumption is correct, according to the error calculation.
         % Discussion
         \newpage
         \section{Discussion}
@@ -579,105 +485,39 @@
                 So we can say that by increasing the size of the grid, we improve the results of the serial programs.\\
 
                 However, we observe bigger errors for parallel programs than for serial programs, 
-                for a small step size. Except for the Forward Space Central Time method \cite{ftcs}, we have a good stability.\\
-                So we can say that in this case, parallelizing complex programs leads to a good stability, but still
-                with a bigger error than in the same program in serial.\\
+                for a small step size. \\
                 That can be due to the fact that our problem is not complex enough, and putting it into parallel
                 causes some more errors than in the serial program, which manages the problem well enough.
+                We must consider the fact that our algorithms may not be the most efficients for the considered problem.
 
 
             \subsection{Performance study}
                 We have observed that the parallelization of our serial programs was leading to a loss of runtime speed. But 
                 the purpose of parallel programs is to reduce the speed-up time.\cite{hptc} One possible cause of this loss
-                of speed could be, as seen before, the fact that our problem is not complex enough to be put in parallel, 
-                and the communication time induced by the parallelization decreases the efficiency of our serial algorithms.
-        %     \subsection{Computational study}
-        %         \subsubsection{LU factorization and solving}
-        %             LU factorization and solving is used in the C++ code. However, Thomas algorithm could have been used for several 
-        %             reasons.
-        %             \\
-        %             First, our matrix is tridiagonal, which is a condition to use Thomas algorithm.
-        %             \\
-        %             Secondly, Thomas algorithm has a smaller complexity ($O(n)$) than LU solving ($O(n^3)$), it is also faster.
-        %             \\
-        %             This way, we would have reduced the total complexity of our code and the computational time.
-        %         \subsubsection{Vectors}
-        %             Another way to reduce the complexity of our code and the used memory would have been to use vectors instead
-        %             of matrixes in equations \eqref{eq:laas} and \eqref{eq:crank}. Indeed, for the implicit methods, most of our matrixes are filled up with zeros, and every line is
-        %             the same, only the position of the values change. We could have used only one vector of size 3 instead of a quite big matrix.
-        %             It is quite all right for this study because we are working with only two dimensions, and with a quite reduced space.
-        %             By moving in a more complex problem, delays would have appeared.
-        %     \subsection{Schemes study}
-        %         \subsubsection{Richardson scheme}
-        %             We saw that Richardson scheme was unstable \cite{rich}. Also, when we change the $T_{i}^n$ term
-        %             in \eqref{eq:rich} by the average $\frac{(T_i^{n+1}+T_i^{n-1})}{2}$, we obtain the following :
-        %             \begin{equation}
-        %                 T_i^{n+1} = T_i^{n-1} + \frac{2D\delta t}{\delta x^2}[T_{i+1}^n - (T_i^{n+1}+T_i^{n-1}) + T_{i-1}^n]
-        %             \end{equation}
-        %             Which is equivalent as \eqref{eq:df}, the Dufort-Frankel scheme, which is a stable scheme \cite{df}.
-        %             \\
-        %             So we can see that by replacing the $T_{i}^n$ term in an unstable scheme by its average in time, we obtain 
-        %             a stable scheme. This is a good thing to know as majority of explicit schemes are unstable. However, they are
-        %             easy to test, so that we can easily find some way to make them stable if they are not.
-        %         \subsubsection{Dufort-Frankel versus other schemes}
-        %             It appears that Dufort-Frankel scheme is the most accurate of the studied schemes. One explanation to those
-        %             results is that with this method, accurate solutions are obtained if $\Delta t << \Delta x$ \cite{df}, which
-        %             is our case.
-        %             The two other schemes, Laasonen and Crank Nicholson seem to have the same accuracy.
-        %             \\
-        %             Crank Nicholson scheme needs a low $D$ coefficient for numerical accuracy \cite{crank}, which is our case. That's why 
-        %             we have a quite good accuracy (less than $1\%$) in our results.
-                
-        %     \subsection{Laasonnen method : effect of the step time}
-        %         As we see on Table \ref{table:laas}, for a fixed $\Delta t$, the error tends to decrease as time grows. However,
-        %         for a fixed time, we can see that increasing the time step make the error bigger. We can assume that we need a
-        %         quite small time step to have good results with this scheme. This can be explained by the fact that
-        %         Laasonen has a good error response, however it has the disadvantage of a poor accuracy \cite{laas}.
+                of speed could be, as seen before, the fact that our problem is not complex enough to be put in parallel. Another
+                cause of this loss can also be the fact that our algorithms may not be the most efficients for the considered problem.
         % % Future work
         \newpage
         \section{Future work}
-            Our future work would be based on three major axes : memory, runtime and interface optimization.
-            It would be interesting to take a smaller time step, and to try to test our program
-            with a parallel programming model, and run it on an HPC, as we have the opportunity 
-            to work on one here at Cranfield University.
-            \subsection{Memory optimization}
-                As said previously, memory use could be improved by at least two manners :
-                \begin{itemize}
-                    \item{Calculate only the values which will be used in the study}
-                    \item{For implicit schemes, replace the tridiagonal matrix by one vector}
-                \end{itemize}
-            \subsection{Runtime optimization}
-                As said before, since we have a small study scale, it is not crucial to have a good
-                runtime optimization. However, we still could optimize the runtime, particularly
-                by using Thomas algorithm instead of LU algorithm.
-            \subsection{Interface optimization}
-                We also could improve the way the results are printed : here we write them brutally
-                in our main function, or in a CSV file, which is used in a spreadsheet application
-                in order to print graphics.
-                \\
-                Maybe a little interface more user-friendly could be developped, using QT or something
-                else, with the possibility for the user to input data, initial conditions, the chosen
-                scheme, and with the printing of graphics and errors value.
-    
+            Our future work would be based on two major axes : 
+            \begin{itemize}
+                \item{parallel algorithms improvement}
+                \item{study complexification}
+            \end{itemize}
         % Conclusion
         \newpage
         \section{Conclusion}
-            For a one dimensional problem, PDE can be resolved using discretisation schemes. In this study
-            we saw that several schemes can fit for this kind of problem. However, some schemes appears to
-            be more accurate.\\
-            The accuracy of all the schemes seems to be impacted by common causes:
-            \begin{itemize}
-                \item{Error grows as time step grows : the smallest time step must be used, while complying with
-                the computational ressources that are at our disposal (indeed, numerical computational error could appear)}
-                \item{Error tends to decrease as the time study grows}
-            \end{itemize}
-            
-            However, there is some factors which gives each scheme particular accuracy.\\
-            \\
-            Resolving PDE with computational methods also introduce numerical errors, due to the computers way
-            of calculating. Depending on the power of the computer we use, we must try to be as precise as possible
-            by setting a study mesh with a grid as small as possible. Some other study with different computational ressource
-            could teach us about the effect of a very small grid, i.e. the effect of a lot more calculations.
+            For physical problems, PDE can be resolved using discretisation schemes. A good way to increase the accuracy
+            of the results, the best way is to increase the size of the study, by reducing the time and space steps. But 
+            as the accuracy is increasing, so are the runtime and the computational costs. As these problems can be
+            quite complex, to reduce computing time, parallelization can be used.\\
+            It may not be interesting to perform a parallelization for every problem : indeed, in some cases,
+            the parallelization of a program may increase the runtime and the error. But for huge and complex
+            programs, the parallelization allows to save runtime and ressources.\\
+            Parallelization is not something that everyone can perform, a good alternative could be to use
+            external libraries, but using external libraries can be dangerous : there is a kind of control
+            loss on the actions performed. However, libraries are supposed to provide a good solution for parallelization
+            (sometimes the best considering memory and CPU use), and maybe better than some homemade programs.
             
         % Aknowledgments
         % \newpage
@@ -690,80 +530,31 @@
             \bibitem{pde}
             Wazwaz, Abdul-Majid. \textit{Partial differential equations}. CRC Press, 2002.
             
+            \bibitem{mpi_doc}
+            Open MPI v2.0.4 documentation.
+            \\\texttt{https://www.open-mpi.org/doc/v2.0/}
+            
             \bibitem{ftcs}
             Luciano Rezzolla \textit{Numerical Methods for the Solution of Partial Differential Equations}, 2011
             
-            % \bibitem{crank} 
-            % Crank, J. & Nicolson, P. Adv Comput Math (1996) 6: 207. 
-            % \\\texttt{https://doi.org/10.1007/BF02127704}
-    
             \bibitem{hptc}
             Gottlieb, Allan; Almasi, George S. (1989). \textit{Highly parallel computing}. Redwood City, Calif.: Benjamin/Cummings.
-            \bibitem{laas} 
-            D. Britz \& Jorg Strutwolf, \textit{Digital Simulation in Electrochemistry}.
-            Springer, 2006
-
+            
             \bibitem{thomasalg1}
             George Karniadakis \textit{Parallel Scientific Computing in C++ and MPI}. 1994.
 
             \bibitem{thomasalg2}
             E.F. Van de Velde. \textit{Concurrent Scientific Computing}. 1994.
 
-            \bibitem{mpi_doc}
-            Open MPI v2.0.4 documentation.
-            \\\texttt{https://www.open-mpi.org/doc/v2.0/}
     
-            
-            % \bibitem{einstein} 
-            % Albert Einstein. 
-            % \textit{Zur Elektrodynamik bewegter K{\"o}rper}. (German) 
-            % [\textit{On the electrodynamics of moving bodies}]. 
-            % Annalen der Physik, 322(10):891–921, 1905.
             
         \end{thebibliography}
         % Appendices
         \newpage
-        % \section{Appendices}
-        %     \subsection{Plots}
-        %         \subsubsection{Different schemes study}
-        %             \begin{figure}[H]
-        %                 \includegraphics[width=\textwidth]{t02.png}
-        %                 \caption{Results with differents schemes at t = 0,2h}
-        %             \end{figure}
-        %             \begin{figure}[H]
-        %                 \includegraphics[width=\textwidth]{t03.png}
-        %                 \caption{Results with differents schemes at t = 0,3h}
-        %             \end{figure}
-        %             \begin{figure}[H]
-        %                 \includegraphics[width=\textwidth]{t04.png}
-        %                 \caption{Results with differents schemes at t = 0,4h}
-        %             \end{figure}
-        %             \begin{figure}[H]
-        %                 \includegraphics[width=\textwidth]{t05.png}
-        %                 \caption{Results with differents schemes at t = 0,5h}
-        %             \end{figure}
-        %         \subsubsection{Laasonen scheme study}
-        %             \begin{figure}[H]
-        %                 \includegraphics[width=\textwidth]{las-2.png}
-        %                 \caption{Laasonen scheme with $\Delta t$ = 0,025}
-        %             \end{figure}
-        %             \begin{figure}[H]
-        %                 \includegraphics[width=\textwidth]{las-3.png}
-        %                 \caption{Laasonen scheme with $\Delta t$ = 0,05}
-        %             \end{figure}
-        %             \subsection{Code sample}
-        %             \lstinputlisting[language=C++, caption=PDESolve class header]{../PDESolve.h}
-        %             \lstinputlisting[language=C++, caption=PDESolve class code]{../PDESolve.cpp}
-        %             \lstinputlisting[language=C++, caption=PDEImplicit class header]{../PDEImplicit.h}
-        %             \lstinputlisting[language=C++, caption=PDEImplicit class code]{../PDEImplicit.cpp}
-        %             \lstinputlisting[language=C++, caption=PDEExplicit class header]{../PDEExplicit.h}
-        %             \lstinputlisting[language=C++, caption=PDEExplicit class code]{../PDEExplicit.cpp}
-        %             \lstinputlisting[language=C++, caption=DufortFrankelSolve class header]{../DufortFrankelSolve.h}
-        %             \lstinputlisting[language=C++, caption=DufortFrankelSolve class code]{../DufortFrankelSolve.cpp}
-        %             \lstinputlisting[language=C++, caption=RichardsonSolve class header]{../RichardsonSolve.h}
-        %             \lstinputlisting[language=C++, caption=RichardsonSolve class code]{../RichardsonSolve.cpp}
-        %             \lstinputlisting[language=C++, caption=LaasonenSolve class header]{../LaasonenSolve.h}
-        %             \lstinputlisting[language=C++, caption=LaasonenSolve class code]{../LaasonenSolve.cpp}
-        %             \lstinputlisting[language=C++, caption=CrankNicholsonSolve class header]{../CrankNicholsonSolve.h}
-        %             \lstinputlisting[language=C++, caption=CrankNicholsonSolve class code]{../CrankNicholsonSolve.cpp}
+        \section{Appendices}
+            \subsection{Code sample}
+                \lstinputlisting[language=C++, caption=Analytical solution code]{../analytical.c}
+                \lstinputlisting[language=C++, caption=FTCS code]{../ftcsv2.c}
+                \lstinputlisting[language=C++, caption=Laasonen code]{../laasonen_MPI.c}
+                \lstinputlisting[language=C++, caption=Crank-Nicholson code]{../crank_mpi.c}
         \end{document}

@@ -3,6 +3,10 @@
 #include <math.h>
 #include <mpi.h>
 
+// LAPACK ROUTINES
+extern void dgttrf_(int *n, double *dl, double *d, double *du, double *du2, int *ipiv, int *info);
+extern void dgttrs_(char *trans, int *n, int *nrhs, double *dl, double *d, double *du, double *du2, int *ipiv, double *b, int *ldb, int *info);
+
 void thomasAlg(const double *a, const double *b, double *c, double *d, double *x, unsigned int n)
 {
     int i;
@@ -169,6 +173,17 @@ void thomasAlg_parallel(int myrank, int npes, int N, double *b, double *a, doubl
     free(d);
     return;
 }
+
+void lapack_resolve(int *N, double *b, double *a, double *c, double *x, double *q)
+{
+    int *ipiv;
+    int info, ldb;
+    char trans = 'N';
+    int val = 1;
+    dgttrf_(N, a, b, c, x, ipiv, &info);
+    dgttrs_(&trans, N, &val, a, b, c, x, ipiv, q, &ldb, &info);
+}
+
 int main(int argc, char *argv[])
 {
     // MPI THINGS
@@ -331,6 +346,8 @@ int main(int argc, char *argv[])
             }
             // RESOLVES a[i]x[i-1]+b[i]x[i]+c[i]x[i+1] = d[i] // WARNING : C AND X ARE MODIFIED
             thomasAlg_parallel(myrank, npes, nspace - 2, a, b, c_copy, x, d_reduced);
+            // int lapack_n = nspace - 2;
+            // lapack_resolve(&lapack_n, b, a, c_copy, x, d_reduced);
 
             // COPY THE RESULT x INTO RESULTS MATRIX
             for (int i = 0; i < nspace - 2; i++)

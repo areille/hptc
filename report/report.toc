@@ -14,8 +14,7 @@
 \contentsline {subsection}{\numberline {4.2}Step size study}{14}{subsection.4.2}
 \contentsline {subsection}{\numberline {4.3}Performance study}{14}{subsection.4.3}
 \contentsline {section}{\numberline {5}Future work}{15}{section.5}
-\contentsline {subsection}{\numberline {5.1}Memory optimization}{15}{subsection.5.1}
-\contentsline {subsection}{\numberline {5.2}Runtime optimization}{15}{subsection.5.2}
-\contentsline {subsection}{\numberline {5.3}Interface optimization}{15}{subsection.5.3}
 \contentsline {section}{\numberline {6}Conclusion}{16}{section.6}
 \contentsline {section}{\numberline {7}References}{17}{section.7}
+\contentsline {section}{\numberline {8}Appendices}{18}{section.8}
+\contentsline {subsection}{\numberline {8.1}Code sample}{18}{subsection.8.1}
