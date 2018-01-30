@@ -566,59 +566,74 @@
                 First, the analytical solution is calculated by the computer, so there may be some numerical error.
                 \\
                 Secondly, we have to consider the calculation of the sum inside equation \eqref{eq:analytical}.
-                Indeed, as $m$ should be infinite, the biggest it is is the best. However, as I choose to calculate
-                all the results for each time step, increasing $m$ also increase run time. I choosed a compromise
-                where values of the analytical solution at $t=0$ were as correct as possible, with an $m$ not too big,
-                to reduce run time.
+                Indeed, as $m$ should be infinite, in theory, the biggest it is is the most accurate. However, increasing computational
+                calculation may alterate the results. I choosed a compromise
+                where values of the analytical solution at $t=0$ were as close to initial conditions as possible, with an $m$ not too big,
+                to reduce run time and numerical error.
                 \\
-                \\
-                Though, it may have been a good idea to calculate the analytical solutions only at studied times : 
-                it would have reduced the memory usage, and we could have afforded to increase the value of $m$.
-                This would have given us better values for our errors calculation.
-    
-            \subsection{Computational study}
-                \subsubsection{LU factorization and solving}
-                    LU factorization and solving is used in the C++ code. However, Thomas algorithm could have been used for several 
-                    reasons.
-                    \\
-                    First, our matrix is tridiagonal, which is a condition to use Thomas algorithm.
-                    \\
-                    Secondly, Thomas algorithm has a smaller complexity ($O(n)$) than LU solving ($O(n^3)$), it is also faster.
-                    \\
-                    This way, we would have reduced the total complexity of our code and the computational time.
-                \subsubsection{Vectors}
-                    Another way to reduce the complexity of our code and the used memory would have been to use vectors instead
-                    of matrixes in equations \eqref{eq:laas} and \eqref{eq:crank}. Indeed, for the implicit methods, most of our matrixes are filled up with zeros, and every line is
-                    the same, only the position of the values change. We could have used only one vector of size 3 instead of a quite big matrix.
-                    It is quite all right for this study because we are working with only two dimensions, and with a quite reduced space.
-                    By moving in a more complex problem, delays would have appeared.
-            \subsection{Schemes study}
-                \subsubsection{Richardson scheme}
-                    We saw that Richardson scheme was unstable \cite{rich}. Also, when we change the $T_{i}^n$ term
-                    in \eqref{eq:rich} by the average $\frac{(T_i^{n+1}+T_i^{n-1})}{2}$, we obtain the following :
-                    \begin{equation}
-                        T_i^{n+1} = T_i^{n-1} + \frac{2D\delta t}{\delta x^2}[T_{i+1}^n - (T_i^{n+1}+T_i^{n-1}) + T_{i-1}^n]
-                    \end{equation}
-                    Which is equivalent as \eqref{eq:df}, the Dufort-Frankel scheme, which is a stable scheme \cite{df}.
-                    \\
-                    So we can see that by replacing the $T_{i}^n$ term in an unstable scheme by its average in time, we obtain 
-                    a stable scheme. This is a good thing to know as majority of explicit schemes are unstable. However, they are
-                    easy to test, so that we can easily find some way to make them stable if they are not.
-                \subsubsection{Dufort-Frankel versus other schemes}
-                    It appears that Dufort-Frankel scheme is the most accurate of the studied schemes. One explanation to those
-                    results is that with this method, accurate solutions are obtained if $\Delta t << \Delta x$ \cite{df}, which
-                    is our case.
-                    The two other schemes, Laasonen and Crank Nicholson seem to have the same accuracy.
-                    \\
-                    Crank Nicholson scheme needs a low $D$ coefficient for numerical accuracy \cite{crank}, which is our case. That's why 
-                    we have a quite good accuracy (less than $1\%$) in our results.
                 
-            \subsection{Laasonnen method : effect of the step time}
-                As we see on Table \ref{table:laas}, for a fixed $\Delta t$, the error tends to decrease as time grows. However,
-                for a fixed time, we can see that increasing the time step make the error bigger. We can assume that we need a
-                quite small time step to have good results with this scheme. This can be explained by the fact that
-                Laasonen has a good error response, however it has the disadvantage of a poor accuracy \cite{laas}.
-        % Future work
+            \subsection{Step size study}
+                With a big step size, we can see that serial results are quite accurate (less than 5\%). However,
+                by reducing the time step and increasing the size of the grid, we observe better accuracy (less than 1\%)
+                for serial results.\\
+                So we can say that by increasing the size of the grid, we improve the results of the serial programs.\\
+
+                However, we observe bigger errors for parallel programs than for serial programs, 
+                for a small step size. Except for the Forward Space Central Time method \cite{ftcs}, we have a good stability.\\
+                So we can say that in this case, parallelizing complex programs leads to a good stability, but still
+                with a bigger error than in the same program in serial.\\
+                That can be due to the fact that our problem is not complex enough, and putting it into parallel
+                causes some more errors than in the serial program, which manages the problem well enough.
+
+
+            \subsection{Performance study}
+                We have observed that the parallelization of our serial programs was leading to a loss of runtime speed. But 
+                the purpose of parallel programs is to reduce the speed-up time.\cite{hptc} One possible cause of this loss
+                of speed could be, as seen before, the fact that our problem is not complex enough to be put in parallel, 
+                and the communication time induced by the parallelization decreases the efficiency of our serial algorithms.
+        %     \subsection{Computational study}
+        %         \subsubsection{LU factorization and solving}
+        %             LU factorization and solving is used in the C++ code. However, Thomas algorithm could have been used for several 
+        %             reasons.
+        %             \\
+        %             First, our matrix is tridiagonal, which is a condition to use Thomas algorithm.
+        %             \\
+        %             Secondly, Thomas algorithm has a smaller complexity ($O(n)$) than LU solving ($O(n^3)$), it is also faster.
+        %             \\
+        %             This way, we would have reduced the total complexity of our code and the computational time.
+        %         \subsubsection{Vectors}
+        %             Another way to reduce the complexity of our code and the used memory would have been to use vectors instead
+        %             of matrixes in equations \eqref{eq:laas} and \eqref{eq:crank}. Indeed, for the implicit methods, most of our matrixes are filled up with zeros, and every line is
+        %             the same, only the position of the values change. We could have used only one vector of size 3 instead of a quite big matrix.
+        %             It is quite all right for this study because we are working with only two dimensions, and with a quite reduced space.
+        %             By moving in a more complex problem, delays would have appeared.
+        %     \subsection{Schemes study}
+        %         \subsubsection{Richardson scheme}
+        %             We saw that Richardson scheme was unstable \cite{rich}. Also, when we change the $T_{i}^n$ term
+        %             in \eqref{eq:rich} by the average $\frac{(T_i^{n+1}+T_i^{n-1})}{2}$, we obtain the following :
+        %             \begin{equation}
+        %                 T_i^{n+1} = T_i^{n-1} + \frac{2D\delta t}{\delta x^2}[T_{i+1}^n - (T_i^{n+1}+T_i^{n-1}) + T_{i-1}^n]
+        %             \end{equation}
+        %             Which is equivalent as \eqref{eq:df}, the Dufort-Frankel scheme, which is a stable scheme \cite{df}.
+        %             \\
+        %             So we can see that by replacing the $T_{i}^n$ term in an unstable scheme by its average in time, we obtain 
+        %             a stable scheme. This is a good thing to know as majority of explicit schemes are unstable. However, they are
+        %             easy to test, so that we can easily find some way to make them stable if they are not.
+        %         \subsubsection{Dufort-Frankel versus other schemes}
+        %             It appears that Dufort-Frankel scheme is the most accurate of the studied schemes. One explanation to those
+        %             results is that with this method, accurate solutions are obtained if $\Delta t << \Delta x$ \cite{df}, which
+        %             is our case.
+        %             The two other schemes, Laasonen and Crank Nicholson seem to have the same accuracy.
+        %             \\
+        %             Crank Nicholson scheme needs a low $D$ coefficient for numerical accuracy \cite{crank}, which is our case. That's why 
+        %             we have a quite good accuracy (less than $1\%$) in our results.
+                
+        %     \subsection{Laasonnen method : effect of the step time}
+        %         As we see on Table \ref{table:laas}, for a fixed $\Delta t$, the error tends to decrease as time grows. However,
+        %         for a fixed time, we can see that increasing the time step make the error bigger. We can assume that we need a
+        %         quite small time step to have good results with this scheme. This can be explained by the fact that
+        %         Laasonen has a good error response, however it has the disadvantage of a poor accuracy \cite{laas}.
+        % % Future work
         \newpage
         \section{Future work}
             Our future work would be based on three major axes : memory, runtime and interface optimization.
@@ -674,22 +689,16 @@
         \begin{thebibliography}{9}
             \bibitem{pde}
             Wazwaz, Abdul-Majid. \textit{Partial differential equations}. CRC Press, 2002.
-    
-            \bibitem{rich} 
-            Markus Schmuck - Numerical Methods for PDEs,
-            \\\texttt{http://www.macs.hw.ac.uk/\~ms713/lecture\_9.pdf}.
-            \\Last visit date : 18/11/2017
-    
-            \bibitem{df} 
-            A. Salih - Finite Difference Method for Parabolic PDE,
-            \\\texttt{https://www.iist.ac.in/sites/default/files/people/parabolic.pdf}.
-            \\Last visit date : 18/11/2017
-    
             
-            \bibitem{crank} 
-            Crank, J. & Nicolson, P. Adv Comput Math (1996) 6: 207. 
-            \\\texttt{https://doi.org/10.1007/BF02127704}
+            \bibitem{ftcs}
+            Luciano Rezzolla \textit{Numerical Methods for the Solution of Partial Differential Equations}, 2011
+            
+            % \bibitem{crank} 
+            % Crank, J. & Nicolson, P. Adv Comput Math (1996) 6: 207. 
+            % \\\texttt{https://doi.org/10.1007/BF02127704}
     
+            \bibitem{hptc}
+            Gottlieb, Allan; Almasi, George S. (1989). \textit{Highly parallel computing}. Redwood City, Calif.: Benjamin/Cummings.
             \bibitem{laas} 
             D. Britz \& Jorg Strutwolf, \textit{Digital Simulation in Electrochemistry}.
             Springer, 2006

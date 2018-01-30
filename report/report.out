@@ -11,16 +11,11 @@
 \BOOKMARK [2][-]{subsection.3.2}{Speed-up investigation}{section.3}% 11
 \BOOKMARK [1][-]{section.4}{Discussion}{}% 12
 \BOOKMARK [2][-]{subsection.4.1}{Analytical solution}{section.4}% 13
-\BOOKMARK [2][-]{subsection.4.2}{Computational study}{section.4}% 14
-\BOOKMARK [3][-]{subsubsection.4.2.1}{LU factorization and solving}{subsection.4.2}% 15
-\BOOKMARK [3][-]{subsubsection.4.2.2}{Vectors}{subsection.4.2}% 16
-\BOOKMARK [2][-]{subsection.4.3}{Schemes study}{section.4}% 17
-\BOOKMARK [3][-]{subsubsection.4.3.1}{Richardson scheme}{subsection.4.3}% 18
-\BOOKMARK [3][-]{subsubsection.4.3.2}{Dufort-Frankel versus other schemes}{subsection.4.3}% 19
-\BOOKMARK [2][-]{subsection.4.4}{Laasonnen method : effect of the step time}{section.4}% 20
-\BOOKMARK [1][-]{section.5}{Future work}{}% 21
-\BOOKMARK [2][-]{subsection.5.1}{Memory optimization}{section.5}% 22
-\BOOKMARK [2][-]{subsection.5.2}{Runtime optimization}{section.5}% 23
-\BOOKMARK [2][-]{subsection.5.3}{Interface optimization}{section.5}% 24
-\BOOKMARK [1][-]{section.6}{Conclusion}{}% 25
-\BOOKMARK [1][-]{section.7}{References}{}% 26
+\BOOKMARK [2][-]{subsection.4.2}{Step size study}{section.4}% 14
+\BOOKMARK [2][-]{subsection.4.3}{Performance study}{section.4}% 15
+\BOOKMARK [1][-]{section.5}{Future work}{}% 16
+\BOOKMARK [2][-]{subsection.5.1}{Memory optimization}{section.5}% 17
+\BOOKMARK [2][-]{subsection.5.2}{Runtime optimization}{section.5}% 18
+\BOOKMARK [2][-]{subsection.5.3}{Interface optimization}{section.5}% 19
+\BOOKMARK [1][-]{section.6}{Conclusion}{}% 20
+\BOOKMARK [1][-]{section.7}{References}{}% 21
