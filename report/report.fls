@@ -138,6 +138,12 @@ INPUT ./ressources/separation.png
 INPUT ressources/parallel_explicit.png
 INPUT ./ressources/parallel_explicit.png
 INPUT ./ressources/parallel_explicit.png
+INPUT ressources/stencil_implicit.png
+INPUT ./ressources/stencil_implicit.png
+INPUT ./ressources/stencil_implicit.png
+INPUT ressources/stencil_crank.png
+INPUT ./ressources/stencil_crank.png
+INPUT ./ressources/stencil_crank.png
 INPUT ressources/step_size_1.png
 INPUT ./ressources/step_size_1.png
 INPUT ./ressources/step_size_1.png

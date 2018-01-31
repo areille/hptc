@@ -59,7 +59,6 @@
         \newpage
         \section{Introduction}
     
-        % --------- TODO --------- 
         A PDE (Partial Differential Equation) is an equation which includes derivatives of an unknown function, with at least 2 variables.
         PDEs can describe the behavior of lot of engineering phenomena \cite{pde}, that's why it is important to 
         known how to resolve them computationally. One way to resolve PDEs is to discretize the problem into
@@ -119,7 +118,7 @@
             This is how the matrix is initialized, according to initial conditions.
 
             \subsection{FTCS simple explicit}
-                
+            
             In order to perform the parallelization, we assume that the number of 
             space steps can be divided by the number of processors. The number of
             space steps divided by the number of processors defines the new space
@@ -127,6 +126,11 @@
             \begin{equation}
                 n'_{space} = \frac{n_{space}}{n_{pes}}
             \end{equation}
+            We have the equation :
+            \begin{equation}
+                T_{i}^{n} = T_{i}^{n-1} + r(T_{i+1}^{n-1} - 2T_{i}^{n-1} + T_{i-1}^{n-1})
+            \end{equation}
+            with $$r = \frac{D\delta t}{\delta x^{2}}$$.
             The stencil for FTCS explicit scheme is the following:
             \begin{figure}[H]
                 \includegraphics[width=4cm]{stencil_explicit.png}
@@ -184,6 +188,12 @@
                     \begin{equation}
                         \frac{T_{j}^{n+1} - T_{j}^n}{\Delta t} = D \frac{T_{j+1}^{n+1}- 2T_{j}^{n+1} + T_{j-1}^{n+1}}{\Delta x^2}
                     \end{equation}
+                    The stencil for Laasonen implicit scheme is the following:
+                    \begin{figure}[H]
+                        \includegraphics[width=4cm]{stencil_implicit.png}
+                        \centering
+                        \caption{Stencil for Laasonen implicit scheme}
+                    \end{figure}
     
                     Written in a matrical way, the solution at space step $n+1$ is given by :
                     \begin{equation}
@@ -337,6 +347,12 @@
                         \begin{equation}
                             \frac{T_{j}^{n+1} - T_{j}^n}{\Delta t} = D\frac{1}{2} (\frac{T_{j+1}^{n+1}- 2T_{j}^{n+1} + T_{j-1}^{n+1}}{\Delta x^2}+\frac{T_{j+1}^{n}- 2T_{j}^{n} + T_{j-1}^{n}}{\Delta x^2})
                         \end{equation}
+                        The stencil for Crank trapezoidal scheme is the following:
+                        \begin{figure}[H]
+                            \includegraphics[width=4cm]{stencil_crank.png}
+                            \centering
+                            \caption{Stencil for Crank trapezoidal scheme}
+                        \end{figure}
                         Written in a matrical way, the solution at space step $n+1$ is given by :
                         \begin{equation}
                             \begin{bmatrix}
@@ -508,16 +524,13 @@
         \newpage
         \section{Conclusion}
             For physical problems, PDE can be resolved using discretisation schemes. A good way to increase the accuracy
-            of the results, the best way is to increase the size of the study, by reducing the time and space steps. But 
+            of the results is to increase the size of the study, by reducing the time and space steps. But 
             as the accuracy is increasing, so are the runtime and the computational costs. As these problems can be
-            quite complex, to reduce computing time, parallelization can be used.\\
-            It may not be interesting to perform a parallelization for every problem : indeed, in some cases,
+            quite complex, to reduce computing time and to provide accurate results, parallelization can be used.\\
+            It may not be interesting to perform a parallelization for every problem : indeed, in some cases, especially
+            for small programs,
             the parallelization of a program may increase the runtime and the error. But for huge and complex
             programs, the parallelization allows to save runtime and ressources.\\
-            Parallelization is not something that everyone can perform, a good alternative could be to use
-            external libraries, but using external libraries can be dangerous : there is a kind of control
-            loss on the actions performed. However, libraries are supposed to provide a good solution for parallelization
-            (sometimes the best considering memory and CPU use), and maybe better than some homemade programs.
             
         % Aknowledgments
         % \newpage

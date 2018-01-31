@@ -6,15 +6,15 @@
 \contentsline {subsubsection}{\numberline {2.2.2}Crank-Nicholson}{9}{subsubsection.2.2.2}
 \contentsline {subsection}{\numberline {2.3}Analytical solution}{10}{subsection.2.3}
 \contentsline {subsection}{\numberline {2.4}Speed-up calculation}{10}{subsection.2.4}
-\contentsline {section}{\numberline {3}Results}{11}{section.3}
-\contentsline {subsection}{\numberline {3.1}Step size effect}{11}{subsection.3.1}
-\contentsline {subsection}{\numberline {3.2}Speed-up investigation}{13}{subsection.3.2}
-\contentsline {section}{\numberline {4}Discussion}{14}{section.4}
-\contentsline {subsection}{\numberline {4.1}Analytical solution}{14}{subsection.4.1}
-\contentsline {subsection}{\numberline {4.2}Step size study}{14}{subsection.4.2}
-\contentsline {subsection}{\numberline {4.3}Performance study}{14}{subsection.4.3}
-\contentsline {section}{\numberline {5}Future work}{15}{section.5}
-\contentsline {section}{\numberline {6}Conclusion}{16}{section.6}
-\contentsline {section}{\numberline {7}References}{17}{section.7}
-\contentsline {section}{\numberline {8}Appendices}{18}{section.8}
-\contentsline {subsection}{\numberline {8.1}Code sample}{18}{subsection.8.1}
+\contentsline {section}{\numberline {3}Results}{12}{section.3}
+\contentsline {subsection}{\numberline {3.1}Step size effect}{12}{subsection.3.1}
+\contentsline {subsection}{\numberline {3.2}Speed-up investigation}{14}{subsection.3.2}
+\contentsline {section}{\numberline {4}Discussion}{15}{section.4}
+\contentsline {subsection}{\numberline {4.1}Analytical solution}{15}{subsection.4.1}
+\contentsline {subsection}{\numberline {4.2}Step size study}{15}{subsection.4.2}
+\contentsline {subsection}{\numberline {4.3}Performance study}{15}{subsection.4.3}
+\contentsline {section}{\numberline {5}Future work}{16}{section.5}
+\contentsline {section}{\numberline {6}Conclusion}{17}{section.6}
+\contentsline {section}{\numberline {7}References}{18}{section.7}
+\contentsline {section}{\numberline {8}Appendices}{19}{section.8}
+\contentsline {subsection}{\numberline {8.1}Code sample}{19}{subsection.8.1}
